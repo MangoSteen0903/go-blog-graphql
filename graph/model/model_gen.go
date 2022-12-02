@@ -6,6 +6,12 @@ import (
 	"github.com/MangoSteen0903/go-blog-graphql/ent"
 )
 
+type LoginResult struct {
+	Ok    bool    `json:"ok"`
+	Error *string `json:"error"`
+	Token *string `json:"token"`
+}
+
 type Result struct {
 	Ok    bool    `json:"ok"`
 	Error *string `json:"error"`

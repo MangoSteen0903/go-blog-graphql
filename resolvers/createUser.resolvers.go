@@ -5,17 +5,17 @@ package resolvers
 
 import (
 	"context"
-	"crypto/sha256"
 	"fmt"
 
 	"github.com/MangoSteen0903/go-blog-graphql/ent"
 	"github.com/MangoSteen0903/go-blog-graphql/graph/generated"
 	"github.com/MangoSteen0903/go-blog-graphql/graph/model"
+	"github.com/MangoSteen0903/go-blog-graphql/utils"
 )
 
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, input ent.CreateUserInput) (*model.Result, error) {
-	newHash := fmt.Sprintf("%x", sha256.Sum256([]byte(input.Password)))
+	newHash := utils.HashingPassword(input.Password)
 	_, err := r.client.User.Create().
 		SetUsername(input.Username).
 		SetLocation(*input.Location).

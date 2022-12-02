@@ -24,7 +24,7 @@ func (r *queryResolver) SeeUser(ctx context.Context, id int) (*model.UserResult,
 		}, nil
 	}
 	return &model.UserResult{
-		Ok:   false,
+		Ok:   true,
 		User: user,
 	}, nil
 }

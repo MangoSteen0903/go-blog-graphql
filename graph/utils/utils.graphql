@@ -3,6 +3,12 @@ type Result {
   error: String
 }
 
+type LoginResult {
+  ok: Boolean!
+  error: String
+  token: String
+}
+
 type UserResult {
   ok: Boolean!
   error: String

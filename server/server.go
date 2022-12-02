@@ -43,15 +43,9 @@ func main() {
 		log.Fatal("Can't Open ent Client")
 	}
 	r := gin.Default()
-	/*
-		http.Handle("/", playground.Handler("User", "/query"))
-
-		http.Handle("/query", srv)
-	*/
 
 	r.GET("/", playgroundHandler())
 	r.POST("/query", graphqlHandler(client))
-	//log.Printf("Listening on http://localhost%v", portUrl)
 
 	if err := r.Run(portUrl); err != nil {
 		log.Fatal("gin server terminated", err)

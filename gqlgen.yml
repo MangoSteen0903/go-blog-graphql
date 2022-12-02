@@ -1,6 +1,6 @@
 # schema tells gqlgen when the GraphQL schema is located.
 schema:
-  - graph/**/**/*.graphql
+  - graph/**/*.graphql
   - ./*.graphql
 
 exec:
@@ -11,9 +11,12 @@ resolver:
   layout: follow-schema
   dir: ./resolvers
   package: resolvers
+  filename_template: "{name}.resolvers.go"
 # gqlgen will search for any type names in the schema in these go packages
 # if they match it will use them, otherwise it will generate them.
-
+model:
+  filename: graph/model/model_gen.go
+  package: model
 # autobind tells gqngen to search for any type names in the GraphQL schema in the
 # provided package. If they match it will use them, otherwise it will generate new.
 autobind:

@@ -1,0 +1,10 @@
+type Result {
+  ok: Boolean!
+  error: String
+}
+
+type UserResult {
+  ok: Boolean!
+  error: String
+  user: User
+}

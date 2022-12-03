@@ -11,7 +11,6 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/joho/godotenv v1.4.0
 	github.com/lib/pq v1.10.7
-	github.com/mitchellh/mapstructure v1.5.0
 	github.com/vektah/gqlparser/v2 v2.5.1
 	github.com/vmihailenco/msgpack/v5 v5.0.0-beta.9
 	golang.org/x/sync v0.1.0
@@ -38,6 +37,7 @@ require (
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7 // indirect
+	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.1 // indirect

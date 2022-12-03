@@ -27,3 +27,43 @@ func (c *UserCreate) SetInput(i CreateUserInput) *UserCreate {
 	i.Mutate(c.Mutation())
 	return c
 }
+
+// UpdateUserInput represents a mutation input for updating users.
+type UpdateUserInput struct {
+	Username      *string
+	Password      *string
+	ClearLocation bool
+	Location      *string
+	IsAdmin       *bool
+}
+
+// Mutate applies the UpdateUserInput on the UserMutation builder.
+func (i *UpdateUserInput) Mutate(m *UserMutation) {
+	if v := i.Username; v != nil {
+		m.SetUsername(*v)
+	}
+	if v := i.Password; v != nil {
+		m.SetPassword(*v)
+	}
+	if i.ClearLocation {
+		m.ClearLocation()
+	}
+	if v := i.Location; v != nil {
+		m.SetLocation(*v)
+	}
+	if v := i.IsAdmin; v != nil {
+		m.SetIsAdmin(*v)
+	}
+}
+
+// SetInput applies the change-set in the UpdateUserInput on the UserUpdate builder.
+func (c *UserUpdate) SetInput(i UpdateUserInput) *UserUpdate {
+	i.Mutate(c.Mutation())
+	return c
+}
+
+// SetInput applies the change-set in the UpdateUserInput on the UserUpdateOne builder.
+func (c *UserUpdateOne) SetInput(i UpdateUserInput) *UserUpdateOne {
+	i.Mutate(c.Mutation())
+	return c
+}

@@ -5,16 +5,14 @@ package resolvers
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/MangoSteen0903/go-blog-graphql/ent"
 	"github.com/MangoSteen0903/go-blog-graphql/graph/model"
 	"github.com/MangoSteen0903/go-blog-graphql/utils"
-	"github.com/mitchellh/mapstructure"
 )
 
 // UpdateUser is the resolver for the updateUser field.
-func (r *mutationResolver) UpdateUser(ctx context.Context, id int, changes map[string]interface{}) (*model.Result, error) {
+func (r *mutationResolver) UpdateUser(ctx context.Context, id int, input ent.UpdateUserInput) (*model.Result, error) {
 	loggedInUser := utils.ForContext(ctx)
 
 	var errMsg string
@@ -33,11 +31,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, id int, changes map[s
 		}, nil
 	}
 
-	err := mapstructure.Decode(changes, &ent.User{})
-	utils.HandleErr(err, "Can't decode map structure :")
-
-	fmt.Println(changes)
-	//update user
+	loggedInUser.Update().SetInput(input).Save(ctx)
 	return &model.Result{
 		Ok: true,
 	}, nil

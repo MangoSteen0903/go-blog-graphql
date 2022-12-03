@@ -38,7 +38,6 @@ func (r *mutationResolver) Login(ctx context.Context, username string, password 
 
 	newToken := utils.BuildToken(user.ID, username, os.Getenv("JWTKEY"))
 
-	fmt.Println(newToken)
 	return &model.LoginResult{
 		Ok:    true,
 		Token: &newToken,

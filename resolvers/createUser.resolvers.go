@@ -16,11 +16,9 @@ import (
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, input ent.CreateUserInput) (*model.Result, error) {
 	newHash := utils.HashingPassword(input.Password)
+	input.Password = newHash
 	_, err := r.client.User.Create().
-		SetUsername(input.Username).
-		SetLocation(*input.Location).
-		SetPassword(newHash).
-		SetIsAdmin(*input.IsAdmin).
+		SetInput(input).
 		Save(ctx)
 
 	errMsg := fmt.Sprintf("%v", err)

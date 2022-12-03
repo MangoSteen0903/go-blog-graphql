@@ -6,6 +6,7 @@ package resolvers
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/MangoSteen0903/go-blog-graphql/ent"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/user"
@@ -27,7 +28,6 @@ func (r *mutationResolver) Login(ctx context.Context, username string, password 
 		}, nil
 	}
 
-	fmt.Println(userPW == user.Password)
 	if userPW != user.Password {
 		errMsg := "Password does not match. Try again."
 		return &model.LoginResult{
@@ -36,8 +36,11 @@ func (r *mutationResolver) Login(ctx context.Context, username string, password 
 		}, nil
 	}
 
-	return &model.LoginResult{
-		Ok: false,
-	}, nil
+	newToken := utils.BuildToken(user.ID, username, os.Getenv("JWTKEY"))
 
+	fmt.Println(newToken)
+	return &model.LoginResult{
+		Ok:    true,
+		Token: &newToken,
+	}, nil
 }

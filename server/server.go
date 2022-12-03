@@ -6,11 +6,13 @@ import (
 	"log"
 	"os"
 
+	"entgo.io/contrib/entgql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/MangoSteen0903/go-blog-graphql/ent"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/migrate"
 	"github.com/MangoSteen0903/go-blog-graphql/resolvers"
+	"github.com/MangoSteen0903/go-blog-graphql/server/middleware"
 	"github.com/MangoSteen0903/go-blog-graphql/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -42,7 +44,10 @@ func main() {
 	); err != nil {
 		log.Fatal("Can't Open ent Client")
 	}
+
 	r := gin.Default()
+
+	r.Use(middleware.AuthMiddleware(client))
 
 	r.GET("/", playgroundHandler())
 	r.POST("/query", graphqlHandler(client))
@@ -55,6 +60,8 @@ func main() {
 func graphqlHandler(client *ent.Client) gin.HandlerFunc {
 	h := handler.NewDefaultServer(resolvers.NewSchema(client))
 	return func(ctx *gin.Context) {
+		//utils.HookTest(client, ctx)
+		h.Use(entgql.Transactioner{TxOpener: client})
 		h.ServeHTTP(ctx.Writer, ctx.Request)
 	}
 }

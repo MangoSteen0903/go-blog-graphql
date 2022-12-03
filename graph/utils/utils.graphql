@@ -3,6 +3,7 @@ type Result {
   error: String
 }
 
+scalar Map
 type LoginResult {
   ok: Boolean!
   error: String

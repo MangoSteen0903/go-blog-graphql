@@ -1,0 +1,15 @@
+extend type Mutation {
+  createUser(input: CreateUserInput!): Result!
+}
+
+extend type Mutation {
+  login(username: String!, password: String!): LoginResult!
+}
+
+extend type Mutation {
+  updateUser(id: Int!, input: UpdateUserInput!): Result!
+}
+
+extend type Query {
+  seeUser(id: Int!): UserResult!
+}

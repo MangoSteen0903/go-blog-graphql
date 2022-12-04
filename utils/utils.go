@@ -31,9 +31,9 @@ func HandleErr(err error, msg string) {
 	}
 }
 
-func HashingPassword(str string) string {
-	hash := fmt.Sprintf("%x", sha256.Sum256([]byte(str)))
-	return hash
+func HashingPassword(str *string) *string {
+	hash := fmt.Sprintf("%x", sha256.Sum256([]byte(*str)))
+	return &hash
 }
 
 func BuildToken(id int, username string, jwtKey string) string {

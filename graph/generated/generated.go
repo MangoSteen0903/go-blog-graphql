@@ -386,20 +386,20 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "../user/createUser.graphql", Input: `extend type Mutation {
+	{Name: "../user/userRepository.graphql", Input: `extend type Mutation {
   createUser(input: CreateUserInput!): Result!
 }
-`, BuiltIn: false},
-	{Name: "../user/login.graphql", Input: `extend type Mutation {
+
+extend type Mutation {
   login(username: String!, password: String!): LoginResult!
 }
-`, BuiltIn: false},
-	{Name: "../user/seeUser.graphql", Input: `extend type Query {
-  seeUser(id: Int!): UserResult!
-}
-`, BuiltIn: false},
-	{Name: "../user/updateUser.graphql", Input: `extend type Mutation {
+
+extend type Mutation {
   updateUser(id: Int!, input: UpdateUserInput!): Result!
+}
+
+extend type Query {
+  seeUser(id: Int!): UserResult!
 }
 `, BuiltIn: false},
 	{Name: "../utils/utils.graphql", Input: `type Result {

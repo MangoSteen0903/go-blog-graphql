@@ -1,3 +1,0 @@
-extend type Mutation {
-  updateUser(id: Int!, input: UpdateUserInput!): Result!
-}

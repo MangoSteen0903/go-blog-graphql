@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/MangoSteen0903/go-blog-graphql/ent/hashtag"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/post"
@@ -1073,7 +1074,9 @@ type UserMutation struct {
 	username      *string
 	password      *string
 	location      *string
+	upload_img    *string
 	is_admin      *bool
+	created_at    *time.Time
 	clearedFields map[string]struct{}
 	_Posts        map[int]struct{}
 	removed_Posts map[int]struct{}
@@ -1302,6 +1305,55 @@ func (m *UserMutation) ResetLocation() {
 	delete(m.clearedFields, user.FieldLocation)
 }
 
+// SetUploadImg sets the "upload_img" field.
+func (m *UserMutation) SetUploadImg(s string) {
+	m.upload_img = &s
+}
+
+// UploadImg returns the value of the "upload_img" field in the mutation.
+func (m *UserMutation) UploadImg() (r string, exists bool) {
+	v := m.upload_img
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUploadImg returns the old "upload_img" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldUploadImg(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUploadImg is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUploadImg requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUploadImg: %w", err)
+	}
+	return oldValue.UploadImg, nil
+}
+
+// ClearUploadImg clears the value of the "upload_img" field.
+func (m *UserMutation) ClearUploadImg() {
+	m.upload_img = nil
+	m.clearedFields[user.FieldUploadImg] = struct{}{}
+}
+
+// UploadImgCleared returns if the "upload_img" field was cleared in this mutation.
+func (m *UserMutation) UploadImgCleared() bool {
+	_, ok := m.clearedFields[user.FieldUploadImg]
+	return ok
+}
+
+// ResetUploadImg resets all changes to the "upload_img" field.
+func (m *UserMutation) ResetUploadImg() {
+	m.upload_img = nil
+	delete(m.clearedFields, user.FieldUploadImg)
+}
+
 // SetIsAdmin sets the "is_admin" field.
 func (m *UserMutation) SetIsAdmin(b bool) {
 	m.is_admin = &b
@@ -1336,6 +1388,42 @@ func (m *UserMutation) OldIsAdmin(ctx context.Context) (v bool, err error) {
 // ResetIsAdmin resets all changes to the "is_admin" field.
 func (m *UserMutation) ResetIsAdmin() {
 	m.is_admin = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *UserMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *UserMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *UserMutation) ResetCreatedAt() {
+	m.created_at = nil
 }
 
 // AddPostIDs adds the "Posts" edge to the Post entity by ids.
@@ -1411,7 +1499,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 6)
 	if m.username != nil {
 		fields = append(fields, user.FieldUsername)
 	}
@@ -1421,8 +1509,14 @@ func (m *UserMutation) Fields() []string {
 	if m.location != nil {
 		fields = append(fields, user.FieldLocation)
 	}
+	if m.upload_img != nil {
+		fields = append(fields, user.FieldUploadImg)
+	}
 	if m.is_admin != nil {
 		fields = append(fields, user.FieldIsAdmin)
+	}
+	if m.created_at != nil {
+		fields = append(fields, user.FieldCreatedAt)
 	}
 	return fields
 }
@@ -1438,8 +1532,12 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.Password()
 	case user.FieldLocation:
 		return m.Location()
+	case user.FieldUploadImg:
+		return m.UploadImg()
 	case user.FieldIsAdmin:
 		return m.IsAdmin()
+	case user.FieldCreatedAt:
+		return m.CreatedAt()
 	}
 	return nil, false
 }
@@ -1455,8 +1553,12 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldPassword(ctx)
 	case user.FieldLocation:
 		return m.OldLocation(ctx)
+	case user.FieldUploadImg:
+		return m.OldUploadImg(ctx)
 	case user.FieldIsAdmin:
 		return m.OldIsAdmin(ctx)
+	case user.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
 	}
 	return nil, fmt.Errorf("unknown User field %s", name)
 }
@@ -1487,12 +1589,26 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetLocation(v)
 		return nil
+	case user.FieldUploadImg:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUploadImg(v)
+		return nil
 	case user.FieldIsAdmin:
 		v, ok := value.(bool)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetIsAdmin(v)
+		return nil
+	case user.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)
@@ -1527,6 +1643,9 @@ func (m *UserMutation) ClearedFields() []string {
 	if m.FieldCleared(user.FieldLocation) {
 		fields = append(fields, user.FieldLocation)
 	}
+	if m.FieldCleared(user.FieldUploadImg) {
+		fields = append(fields, user.FieldUploadImg)
+	}
 	return fields
 }
 
@@ -1543,6 +1662,9 @@ func (m *UserMutation) ClearField(name string) error {
 	switch name {
 	case user.FieldLocation:
 		m.ClearLocation()
+		return nil
+	case user.FieldUploadImg:
+		m.ClearUploadImg()
 		return nil
 	}
 	return fmt.Errorf("unknown User nullable field %s", name)
@@ -1561,8 +1683,14 @@ func (m *UserMutation) ResetField(name string) error {
 	case user.FieldLocation:
 		m.ResetLocation()
 		return nil
+	case user.FieldUploadImg:
+		m.ResetUploadImg()
+		return nil
 	case user.FieldIsAdmin:
 		m.ResetIsAdmin()
+		return nil
+	case user.FieldCreatedAt:
+		m.ResetCreatedAt()
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)

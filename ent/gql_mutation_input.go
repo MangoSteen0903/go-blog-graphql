@@ -2,6 +2,10 @@
 
 package ent
 
+import (
+	"time"
+)
+
 // CreatePostInput represents a mutation input for creating posts.
 type CreatePostInput struct {
 	Title      string
@@ -86,11 +90,13 @@ func (c *PostUpdateOne) SetInput(i UpdatePostInput) *PostUpdateOne {
 
 // CreateUserInput represents a mutation input for creating users.
 type CreateUserInput struct {
-	Username string
-	Password string
-	Location *string
-	IsAdmin  *bool
-	PostIDs  []int
+	Username  string
+	Password  string
+	Location  *string
+	UploadImg *string
+	IsAdmin   *bool
+	CreatedAt *time.Time
+	PostIDs   []int
 }
 
 // Mutate applies the CreateUserInput on the UserMutation builder.
@@ -100,8 +106,14 @@ func (i *CreateUserInput) Mutate(m *UserMutation) {
 	if v := i.Location; v != nil {
 		m.SetLocation(*v)
 	}
+	if v := i.UploadImg; v != nil {
+		m.SetUploadImg(*v)
+	}
 	if v := i.IsAdmin; v != nil {
 		m.SetIsAdmin(*v)
+	}
+	if v := i.CreatedAt; v != nil {
+		m.SetCreatedAt(*v)
 	}
 	if v := i.PostIDs; len(v) > 0 {
 		m.AddPostIDs(v...)
@@ -116,13 +128,16 @@ func (c *UserCreate) SetInput(i CreateUserInput) *UserCreate {
 
 // UpdateUserInput represents a mutation input for updating users.
 type UpdateUserInput struct {
-	Username      *string
-	Password      *string
-	ClearLocation bool
-	Location      *string
-	IsAdmin       *bool
-	AddPostIDs    []int
-	RemovePostIDs []int
+	Username       *string
+	Password       *string
+	ClearLocation  bool
+	Location       *string
+	ClearUploadImg bool
+	UploadImg      *string
+	IsAdmin        *bool
+	CreatedAt      *time.Time
+	AddPostIDs     []int
+	RemovePostIDs  []int
 }
 
 // Mutate applies the UpdateUserInput on the UserMutation builder.
@@ -139,8 +154,17 @@ func (i *UpdateUserInput) Mutate(m *UserMutation) {
 	if v := i.Location; v != nil {
 		m.SetLocation(*v)
 	}
+	if i.ClearUploadImg {
+		m.ClearUploadImg()
+	}
+	if v := i.UploadImg; v != nil {
+		m.SetUploadImg(*v)
+	}
 	if v := i.IsAdmin; v != nil {
 		m.SetIsAdmin(*v)
+	}
+	if v := i.CreatedAt; v != nil {
+		m.SetCreatedAt(*v)
 	}
 	if v := i.AddPostIDs; len(v) > 0 {
 		m.AddPostIDs(v...)

@@ -3,6 +3,8 @@
 package user
 
 import (
+	"time"
+
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/predicate"
@@ -100,10 +102,24 @@ func Location(v string) predicate.User {
 	})
 }
 
+// UploadImg applies equality check predicate on the "upload_img" field. It's identical to UploadImgEQ.
+func UploadImg(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldUploadImg), v))
+	})
+}
+
 // IsAdmin applies equality check predicate on the "is_admin" field. It's identical to IsAdminEQ.
 func IsAdmin(v bool) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldIsAdmin), v))
+	})
+}
+
+// CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
+func CreatedAt(v time.Time) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldCreatedAt), v))
 	})
 }
 
@@ -418,6 +434,119 @@ func LocationContainsFold(v string) predicate.User {
 	})
 }
 
+// UploadImgEQ applies the EQ predicate on the "upload_img" field.
+func UploadImgEQ(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldUploadImg), v))
+	})
+}
+
+// UploadImgNEQ applies the NEQ predicate on the "upload_img" field.
+func UploadImgNEQ(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldUploadImg), v))
+	})
+}
+
+// UploadImgIn applies the In predicate on the "upload_img" field.
+func UploadImgIn(vs ...string) predicate.User {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.In(s.C(FieldUploadImg), v...))
+	})
+}
+
+// UploadImgNotIn applies the NotIn predicate on the "upload_img" field.
+func UploadImgNotIn(vs ...string) predicate.User {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.NotIn(s.C(FieldUploadImg), v...))
+	})
+}
+
+// UploadImgGT applies the GT predicate on the "upload_img" field.
+func UploadImgGT(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldUploadImg), v))
+	})
+}
+
+// UploadImgGTE applies the GTE predicate on the "upload_img" field.
+func UploadImgGTE(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldUploadImg), v))
+	})
+}
+
+// UploadImgLT applies the LT predicate on the "upload_img" field.
+func UploadImgLT(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldUploadImg), v))
+	})
+}
+
+// UploadImgLTE applies the LTE predicate on the "upload_img" field.
+func UploadImgLTE(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldUploadImg), v))
+	})
+}
+
+// UploadImgContains applies the Contains predicate on the "upload_img" field.
+func UploadImgContains(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldUploadImg), v))
+	})
+}
+
+// UploadImgHasPrefix applies the HasPrefix predicate on the "upload_img" field.
+func UploadImgHasPrefix(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldUploadImg), v))
+	})
+}
+
+// UploadImgHasSuffix applies the HasSuffix predicate on the "upload_img" field.
+func UploadImgHasSuffix(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldUploadImg), v))
+	})
+}
+
+// UploadImgIsNil applies the IsNil predicate on the "upload_img" field.
+func UploadImgIsNil() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldUploadImg)))
+	})
+}
+
+// UploadImgNotNil applies the NotNil predicate on the "upload_img" field.
+func UploadImgNotNil() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldUploadImg)))
+	})
+}
+
+// UploadImgEqualFold applies the EqualFold predicate on the "upload_img" field.
+func UploadImgEqualFold(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldUploadImg), v))
+	})
+}
+
+// UploadImgContainsFold applies the ContainsFold predicate on the "upload_img" field.
+func UploadImgContainsFold(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldUploadImg), v))
+	})
+}
+
 // IsAdminEQ applies the EQ predicate on the "is_admin" field.
 func IsAdminEQ(v bool) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
@@ -429,6 +558,70 @@ func IsAdminEQ(v bool) predicate.User {
 func IsAdminNEQ(v bool) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldIsAdmin), v))
+	})
+}
+
+// CreatedAtEQ applies the EQ predicate on the "created_at" field.
+func CreatedAtEQ(v time.Time) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldCreatedAt), v))
+	})
+}
+
+// CreatedAtNEQ applies the NEQ predicate on the "created_at" field.
+func CreatedAtNEQ(v time.Time) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldCreatedAt), v))
+	})
+}
+
+// CreatedAtIn applies the In predicate on the "created_at" field.
+func CreatedAtIn(vs ...time.Time) predicate.User {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.In(s.C(FieldCreatedAt), v...))
+	})
+}
+
+// CreatedAtNotIn applies the NotIn predicate on the "created_at" field.
+func CreatedAtNotIn(vs ...time.Time) predicate.User {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.NotIn(s.C(FieldCreatedAt), v...))
+	})
+}
+
+// CreatedAtGT applies the GT predicate on the "created_at" field.
+func CreatedAtGT(v time.Time) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldCreatedAt), v))
+	})
+}
+
+// CreatedAtGTE applies the GTE predicate on the "created_at" field.
+func CreatedAtGTE(v time.Time) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldCreatedAt), v))
+	})
+}
+
+// CreatedAtLT applies the LT predicate on the "created_at" field.
+func CreatedAtLT(v time.Time) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldCreatedAt), v))
+	})
+}
+
+// CreatedAtLTE applies the LTE predicate on the "created_at" field.
+func CreatedAtLTE(v time.Time) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldCreatedAt), v))
 	})
 }
 

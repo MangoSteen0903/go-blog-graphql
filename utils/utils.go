@@ -104,18 +104,13 @@ func CreateHashtags(client *ent.Client, hashtags string) []*ent.Hashtag {
 
 	for _, word := range words {
 		var newHashtag *ent.Hashtag
-
-		existHashtag, err := client.Hashtag.Query().Where(hashtag.Hashtag(word)).Only(ctx)
-
+		_, err := client.Hashtag.Query().Where(hashtag.Hashtag(word)).Only(ctx)
 		if err != nil {
 			newHashtag, err = client.Hashtag.Create().SetHashtag(word).Save(ctx)
 			HandleErr(err, "Can't create hashtag : ")
-		} else {
-			newHashtag = existHashtag
+			result = append(result, newHashtag)
 		}
-		result = append(result, newHashtag)
 	}
 
-	fmt.Println(result)
 	return result
 }

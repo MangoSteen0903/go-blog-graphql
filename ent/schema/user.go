@@ -1,6 +1,8 @@
 package schema
 
 import (
+	"time"
+
 	"entgo.io/contrib/entgql"
 	"entgo.io/ent"
 	"entgo.io/ent/schema"
@@ -19,7 +21,9 @@ func (User) Fields() []ent.Field {
 		field.String("username").Unique(),
 		field.String("password"),
 		field.String("location").Optional(),
+		field.String("upload_img").Optional().Default(""),
 		field.Bool("is_admin").Default(false),
+		field.Time("created_at").Default(time.Now),
 	}
 }
 

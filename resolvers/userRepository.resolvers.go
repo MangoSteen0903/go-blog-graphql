@@ -6,8 +6,11 @@ package resolvers
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
+	"time"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/MangoSteen0903/go-blog-graphql/ent"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/user"
 	"github.com/MangoSteen0903/go-blog-graphql/graph/model"
@@ -15,9 +18,25 @@ import (
 )
 
 // CreateUser is the resolver for the createUser field.
-func (r *mutationResolver) CreateUser(ctx context.Context, input ent.CreateUserInput) (*model.Result, error) {
+func (r *mutationResolver) CreateUser(ctx context.Context, input ent.CreateUserInput, file *graphql.Upload) (*model.Result, error) {
 	newHash := utils.HashingPassword(&input.Password)
 	input.Password = *newHash
+
+	if file != nil {
+		dirname := "./upload"
+		userFileName := fmt.Sprintf("%v/%v-%v-%v.jpg", dirname, input.Username, file.Filename, time.Now())
+
+		newFile, err := os.Create(userFileName)
+
+		if err != nil {
+			utils.HandleErr(err, "Error Opening file: ")
+		}
+
+		io.Copy(newFile, file.File)
+		defer newFile.Close()
+
+		input.UploadImg = &userFileName
+	}
 	_, err := r.client.User.Create().
 		SetInput(input).
 		Save(ctx)
@@ -34,6 +53,35 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input ent.CreateUserI
 	return &model.Result{
 		Ok:    true,
 		Error: nil,
+	}, nil
+}
+
+// UpdateUser is the resolver for the updateUser field.
+func (r *mutationResolver) UpdateUser(ctx context.Context, id int, input ent.UpdateUserInput, file *graphql.Upload) (*model.Result, error) {
+	loggedInUser := utils.ForContext(ctx)
+
+	var errMsg string
+	if loggedInUser == nil {
+		errMsg = "You need to login to Perform this action. Try again."
+		return &model.Result{
+			Ok:    false,
+			Error: &errMsg,
+		}, nil
+	}
+	if loggedInUser.ID != id {
+		errMsg = "Your not authorized to Update this user. Try again."
+		return &model.Result{
+			Ok:    false,
+			Error: &errMsg,
+		}, nil
+	}
+
+	input.Password = utils.HashingPassword(input.Password)
+	loggedInUser.Update().SetInput(input).Save(ctx)
+
+	fmt.Println(file)
+	return &model.Result{
+		Ok: true,
 	}, nil
 }
 
@@ -64,33 +112,6 @@ func (r *mutationResolver) Login(ctx context.Context, username string, password 
 	return &model.LoginResult{
 		Ok:    true,
 		Token: &newToken,
-	}, nil
-}
-
-// UpdateUser is the resolver for the updateUser field.
-func (r *mutationResolver) UpdateUser(ctx context.Context, id int, input ent.UpdateUserInput) (*model.Result, error) {
-	loggedInUser := utils.ForContext(ctx)
-
-	var errMsg string
-	if loggedInUser == nil {
-		errMsg = "You need to login to Perform this action. Try again."
-		return &model.Result{
-			Ok:    false,
-			Error: &errMsg,
-		}, nil
-	}
-	if loggedInUser.ID != id {
-		errMsg = "Your not authorized to Update this user. Try again."
-		return &model.Result{
-			Ok:    false,
-			Error: &errMsg,
-		}, nil
-	}
-
-	input.Password = utils.HashingPassword(input.Password)
-	loggedInUser.Update().SetInput(input).Save(ctx)
-	return &model.Result{
-		Ok: true,
 	}, nil
 }
 

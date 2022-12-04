@@ -1,19 +1,12 @@
-extend type Mutation {
-  createUser(input: CreateUserInput!): Result!
-}
+scalar Upload
 
 extend type Mutation {
+  createUser(input: CreateUserInput!, file: Upload): Result!
+  updateUser(id: Int!, input: UpdateUserInput!, file: Upload): Result!
   login(username: String!, password: String!): LoginResult!
-}
-
-extend type Mutation {
-  updateUser(id: Int!, input: UpdateUserInput!): Result!
 }
 
 extend type Query {
   seeUser(id: Int!): UserResult!
-}
-
-extend type Query {
   seeUsers: [User]!
 }

@@ -47,7 +47,9 @@ var (
 		{Name: "username", Type: field.TypeString, Unique: true},
 		{Name: "password", Type: field.TypeString},
 		{Name: "location", Type: field.TypeString, Nullable: true},
+		{Name: "upload_img", Type: field.TypeString, Nullable: true, Default: ""},
 		{Name: "is_admin", Type: field.TypeBool, Default: false},
+		{Name: "created_at", Type: field.TypeTime},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{

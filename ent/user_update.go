@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -60,6 +61,26 @@ func (uu *UserUpdate) ClearLocation() *UserUpdate {
 	return uu
 }
 
+// SetUploadImg sets the "upload_img" field.
+func (uu *UserUpdate) SetUploadImg(s string) *UserUpdate {
+	uu.mutation.SetUploadImg(s)
+	return uu
+}
+
+// SetNillableUploadImg sets the "upload_img" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableUploadImg(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetUploadImg(*s)
+	}
+	return uu
+}
+
+// ClearUploadImg clears the value of the "upload_img" field.
+func (uu *UserUpdate) ClearUploadImg() *UserUpdate {
+	uu.mutation.ClearUploadImg()
+	return uu
+}
+
 // SetIsAdmin sets the "is_admin" field.
 func (uu *UserUpdate) SetIsAdmin(b bool) *UserUpdate {
 	uu.mutation.SetIsAdmin(b)
@@ -70,6 +91,20 @@ func (uu *UserUpdate) SetIsAdmin(b bool) *UserUpdate {
 func (uu *UserUpdate) SetNillableIsAdmin(b *bool) *UserUpdate {
 	if b != nil {
 		uu.SetIsAdmin(*b)
+	}
+	return uu
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (uu *UserUpdate) SetCreatedAt(t time.Time) *UserUpdate {
+	uu.mutation.SetCreatedAt(t)
+	return uu
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableCreatedAt(t *time.Time) *UserUpdate {
+	if t != nil {
+		uu.SetCreatedAt(*t)
 	}
 	return uu
 }
@@ -199,8 +234,17 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if uu.mutation.LocationCleared() {
 		_spec.ClearField(user.FieldLocation, field.TypeString)
 	}
+	if value, ok := uu.mutation.UploadImg(); ok {
+		_spec.SetField(user.FieldUploadImg, field.TypeString, value)
+	}
+	if uu.mutation.UploadImgCleared() {
+		_spec.ClearField(user.FieldUploadImg, field.TypeString)
+	}
 	if value, ok := uu.mutation.IsAdmin(); ok {
 		_spec.SetField(user.FieldIsAdmin, field.TypeBool, value)
+	}
+	if value, ok := uu.mutation.CreatedAt(); ok {
+		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)
 	}
 	if uu.mutation.PostsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -307,6 +351,26 @@ func (uuo *UserUpdateOne) ClearLocation() *UserUpdateOne {
 	return uuo
 }
 
+// SetUploadImg sets the "upload_img" field.
+func (uuo *UserUpdateOne) SetUploadImg(s string) *UserUpdateOne {
+	uuo.mutation.SetUploadImg(s)
+	return uuo
+}
+
+// SetNillableUploadImg sets the "upload_img" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableUploadImg(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetUploadImg(*s)
+	}
+	return uuo
+}
+
+// ClearUploadImg clears the value of the "upload_img" field.
+func (uuo *UserUpdateOne) ClearUploadImg() *UserUpdateOne {
+	uuo.mutation.ClearUploadImg()
+	return uuo
+}
+
 // SetIsAdmin sets the "is_admin" field.
 func (uuo *UserUpdateOne) SetIsAdmin(b bool) *UserUpdateOne {
 	uuo.mutation.SetIsAdmin(b)
@@ -317,6 +381,20 @@ func (uuo *UserUpdateOne) SetIsAdmin(b bool) *UserUpdateOne {
 func (uuo *UserUpdateOne) SetNillableIsAdmin(b *bool) *UserUpdateOne {
 	if b != nil {
 		uuo.SetIsAdmin(*b)
+	}
+	return uuo
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (uuo *UserUpdateOne) SetCreatedAt(t time.Time) *UserUpdateOne {
+	uuo.mutation.SetCreatedAt(t)
+	return uuo
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableCreatedAt(t *time.Time) *UserUpdateOne {
+	if t != nil {
+		uuo.SetCreatedAt(*t)
 	}
 	return uuo
 }
@@ -476,8 +554,17 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if uuo.mutation.LocationCleared() {
 		_spec.ClearField(user.FieldLocation, field.TypeString)
 	}
+	if value, ok := uuo.mutation.UploadImg(); ok {
+		_spec.SetField(user.FieldUploadImg, field.TypeString, value)
+	}
+	if uuo.mutation.UploadImgCleared() {
+		_spec.ClearField(user.FieldUploadImg, field.TypeString)
+	}
 	if value, ok := uuo.mutation.IsAdmin(); ok {
 		_spec.SetField(user.FieldIsAdmin, field.TypeBool, value)
+	}
+	if value, ok := uuo.mutation.CreatedAt(); ok {
+		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)
 	}
 	if uuo.mutation.PostsCleared() {
 		edge := &sqlgraph.EdgeSpec{

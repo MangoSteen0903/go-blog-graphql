@@ -17,6 +17,55 @@ import (
 
 // CreatePost is the resolver for the createPost field.
 func (r *mutationResolver) CreatePost(ctx context.Context, input ent.CreatePostInput, hashtags *string) (*model.Result, error) {
+	var errMsg string
+	errResult := model.Result{Ok: false}
+
+	loggedInUser := utils.ForContext(ctx)
+	result := utils.CheckLogin(loggedInUser)
+
+	if result != nil {
+		return result, nil
+	}
+
+	if !loggedInUser.IsAdmin {
+		errMsg = "You're not authorized to post on a blog."
+		errResult.Error = &errMsg
+		return &errResult, nil
+	}
+
+	input.OwnerID = &loggedInUser.ID
+	if hashtags != nil {
+		newHashtags := utils.CreateHashtags(r.client, *hashtags)
+		_, err := r.client.Post.Create().
+			SetInput(input).
+			AddHashtags(newHashtags...).
+			Save(ctx)
+		if err != nil {
+			errMsg = "Can't Create Post."
+			errResult.Error = &errMsg
+			return &errResult, nil
+		}
+	} else {
+		_, err := r.client.Post.Create().
+			SetInput(input).
+			Save(ctx)
+		if err != nil {
+			errMsg = "Can't Create Post."
+			errResult.Error = &errMsg
+			return &errResult, nil
+		}
+	}
+
+	return &model.Result{
+		Ok: true,
+	}, nil
+}
+
+// UpdatePost is the resolver for the updatePost field.
+func (r *mutationResolver) UpdatePost(ctx context.Context, id int, input ent.UpdatePostInput, hashtags *string) (*model.Result, error) {
+	var errMsg string
+	errResult := model.Result{Ok: false}
+
 	loggedInUser := utils.ForContext(ctx)
 
 	result := utils.CheckLogin(loggedInUser)
@@ -25,23 +74,59 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input ent.CreatePostI
 		return result, nil
 	}
 
-	errMsg := "You're not authorized to post on a blog."
 	if !loggedInUser.IsAdmin {
-		return &model.Result{
-			Ok:    false,
-			Error: &errMsg,
-		}, nil
+		errMsg = "You're not authorized to update on a blog."
+		errResult.Error = &errMsg
+		return &errResult, nil
 	}
 
-	newHashtags := utils.CreateHashtags(r.client, *hashtags)
+	updatedPost, err := r.client.Post.Query().Where(post.ID(id)).Only(ctx)
 
-	input.OwnerID = &loggedInUser.ID
-	_, err := r.client.Post.Create().
-		SetInput(input).
-		AddHashtags(newHashtags...).
-		Save(ctx)
+	if err != nil {
+		errMsg = "Cannot find Post. Please Try again."
+		errResult.Error = &errMsg
+		return &errResult, nil
+	}
 
-	utils.HandleErr(err, "Can't create Post :")
+	postOwner, err := updatedPost.QueryOwner().Only(ctx)
+	if err != nil {
+		errMsg = "Cannot find Post's Owner."
+		errResult.Error = &errMsg
+		return &errResult, nil
+	}
+
+	if loggedInUser.ID != postOwner.ID {
+		errMsg = "Your not authorized to Edit This Post."
+		errResult.Error = &errMsg
+		return &errResult, nil
+	}
+
+	var newHashtags []*ent.Hashtag
+	if hashtags != nil {
+		newHashtags = utils.CreateHashtags(r.client, *hashtags)
+	}
+
+	switch {
+	case newHashtags != nil:
+		_, err := updatedPost.Update().
+			SetInput(input).
+			AddHashtags(newHashtags...).
+			Save(ctx)
+		if err != nil {
+			errMsg = "Can't Update Post"
+			errResult.Error = &errMsg
+			return &errResult, nil
+		}
+	case newHashtags == nil || hashtags == nil:
+		_, err := updatedPost.Update().
+			SetInput(input).
+			Save(ctx)
+		if err != nil {
+			errMsg = "Can't Update Post"
+			errResult.Error = &errMsg
+			return &errResult, nil
+		}
+	}
 
 	return &model.Result{
 		Ok: true,
@@ -56,7 +141,7 @@ func (r *queryResolver) SeeUserPost(ctx context.Context, userID int) ([]*ent.Pos
 		),
 	).All(ctx)
 
-	utils.HandleErr(err, "Can't find User's Post :")
+	utils.HandleErr(err, "Can't find User's Post.")
 
 	fmt.Println(posts)
 	return posts, nil

@@ -2,6 +2,10 @@
 
 package user
 
+import (
+	"time"
+)
+
 const (
 	// Label holds the string label denoting the user type in the database.
 	Label = "user"
@@ -13,8 +17,12 @@ const (
 	FieldPassword = "password"
 	// FieldLocation holds the string denoting the location field in the database.
 	FieldLocation = "location"
+	// FieldUploadImg holds the string denoting the upload_img field in the database.
+	FieldUploadImg = "upload_img"
 	// FieldIsAdmin holds the string denoting the is_admin field in the database.
 	FieldIsAdmin = "is_admin"
+	// FieldCreatedAt holds the string denoting the created_at field in the database.
+	FieldCreatedAt = "created_at"
 	// EdgePosts holds the string denoting the posts edge name in mutations.
 	EdgePosts = "Posts"
 	// Table holds the table name of the user in the database.
@@ -34,7 +42,9 @@ var Columns = []string{
 	FieldUsername,
 	FieldPassword,
 	FieldLocation,
+	FieldUploadImg,
 	FieldIsAdmin,
+	FieldCreatedAt,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -48,6 +58,10 @@ func ValidColumn(column string) bool {
 }
 
 var (
+	// DefaultUploadImg holds the default value on creation for the "upload_img" field.
+	DefaultUploadImg string
 	// DefaultIsAdmin holds the default value on creation for the "is_admin" field.
 	DefaultIsAdmin bool
+	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
+	DefaultCreatedAt func() time.Time
 )

@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -46,6 +47,20 @@ func (uc *UserCreate) SetNillableLocation(s *string) *UserCreate {
 	return uc
 }
 
+// SetUploadImg sets the "upload_img" field.
+func (uc *UserCreate) SetUploadImg(s string) *UserCreate {
+	uc.mutation.SetUploadImg(s)
+	return uc
+}
+
+// SetNillableUploadImg sets the "upload_img" field if the given value is not nil.
+func (uc *UserCreate) SetNillableUploadImg(s *string) *UserCreate {
+	if s != nil {
+		uc.SetUploadImg(*s)
+	}
+	return uc
+}
+
 // SetIsAdmin sets the "is_admin" field.
 func (uc *UserCreate) SetIsAdmin(b bool) *UserCreate {
 	uc.mutation.SetIsAdmin(b)
@@ -56,6 +71,20 @@ func (uc *UserCreate) SetIsAdmin(b bool) *UserCreate {
 func (uc *UserCreate) SetNillableIsAdmin(b *bool) *UserCreate {
 	if b != nil {
 		uc.SetIsAdmin(*b)
+	}
+	return uc
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (uc *UserCreate) SetCreatedAt(t time.Time) *UserCreate {
+	uc.mutation.SetCreatedAt(t)
+	return uc
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (uc *UserCreate) SetNillableCreatedAt(t *time.Time) *UserCreate {
+	if t != nil {
+		uc.SetCreatedAt(*t)
 	}
 	return uc
 }
@@ -152,9 +181,17 @@ func (uc *UserCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (uc *UserCreate) defaults() {
+	if _, ok := uc.mutation.UploadImg(); !ok {
+		v := user.DefaultUploadImg
+		uc.mutation.SetUploadImg(v)
+	}
 	if _, ok := uc.mutation.IsAdmin(); !ok {
 		v := user.DefaultIsAdmin
 		uc.mutation.SetIsAdmin(v)
+	}
+	if _, ok := uc.mutation.CreatedAt(); !ok {
+		v := user.DefaultCreatedAt()
+		uc.mutation.SetCreatedAt(v)
 	}
 }
 
@@ -168,6 +205,9 @@ func (uc *UserCreate) check() error {
 	}
 	if _, ok := uc.mutation.IsAdmin(); !ok {
 		return &ValidationError{Name: "is_admin", err: errors.New(`ent: missing required field "User.is_admin"`)}
+	}
+	if _, ok := uc.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "User.created_at"`)}
 	}
 	return nil
 }
@@ -208,9 +248,17 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldLocation, field.TypeString, value)
 		_node.Location = value
 	}
+	if value, ok := uc.mutation.UploadImg(); ok {
+		_spec.SetField(user.FieldUploadImg, field.TypeString, value)
+		_node.UploadImg = value
+	}
 	if value, ok := uc.mutation.IsAdmin(); ok {
 		_spec.SetField(user.FieldIsAdmin, field.TypeBool, value)
 		_node.IsAdmin = value
+	}
+	if value, ok := uc.mutation.CreatedAt(); ok {
+		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
 	}
 	if nodes := uc.mutation.PostsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

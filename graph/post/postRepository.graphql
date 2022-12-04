@@ -1,0 +1,7 @@
+extend type Mutation {
+  createPost(input: CreatePostInput!, hashtags: String): Result!
+}
+
+extend type Query {
+  seeUserPost(user_id: Int!): [Post]!
+}

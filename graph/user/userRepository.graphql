@@ -13,3 +13,7 @@ extend type Mutation {
 extend type Query {
   seeUser(id: Int!): UserResult!
 }
+
+extend type Query {
+  seeUsers: [User]!
+}

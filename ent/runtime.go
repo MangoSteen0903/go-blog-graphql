@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"github.com/MangoSteen0903/go-blog-graphql/ent/post"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/schema"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/user"
 )
@@ -11,6 +12,12 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	postFields := schema.Post{}.Fields()
+	_ = postFields
+	// postDescLikes is the schema descriptor for Likes field.
+	postDescLikes := postFields[2].Descriptor()
+	// post.DefaultLikes holds the default value on creation for the Likes field.
+	post.DefaultLikes = postDescLikes.Default.(int)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescIsAdmin is the schema descriptor for is_admin field.

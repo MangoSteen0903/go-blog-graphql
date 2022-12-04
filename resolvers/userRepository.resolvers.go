@@ -10,7 +10,6 @@ import (
 
 	"github.com/MangoSteen0903/go-blog-graphql/ent"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/user"
-	"github.com/MangoSteen0903/go-blog-graphql/graph/generated"
 	"github.com/MangoSteen0903/go-blog-graphql/graph/model"
 	"github.com/MangoSteen0903/go-blog-graphql/utils"
 )
@@ -112,7 +111,9 @@ func (r *queryResolver) SeeUser(ctx context.Context, id int) (*model.UserResult,
 	}, nil
 }
 
-// Mutation returns generated.MutationResolver implementation.
-func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
-
-type mutationResolver struct{ *Resolver }
+// SeeUsers is the resolver for the seeUsers field.
+func (r *queryResolver) SeeUsers(ctx context.Context) ([]*ent.User, error) {
+	users, err := r.client.User.Query().All(ctx)
+	utils.HandleErr(err, "Can't Query all Users :")
+	return users, nil
+}

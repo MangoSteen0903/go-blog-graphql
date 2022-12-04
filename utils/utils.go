@@ -7,10 +7,13 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/MangoSteen0903/go-blog-graphql/ent"
+	"github.com/MangoSteen0903/go-blog-graphql/ent/hashtag"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/user"
+	"github.com/MangoSteen0903/go-blog-graphql/graph/model"
 	"github.com/golang-jwt/jwt/v4"
 )
 
@@ -78,4 +81,41 @@ func ForContext(ctx context.Context) *ent.User {
 	raw, _ := ctx.Value(UserCtxkey).(*ent.User)
 	return raw
 
+}
+
+func CheckLogin(loggedInUser *ent.User) *model.Result {
+	var errMsg string
+	if loggedInUser == nil {
+		errMsg = "You need to login to Perform this action. Try again."
+		return &model.Result{
+			Ok:    false,
+			Error: &errMsg,
+		}
+	}
+	return nil
+}
+
+func CreateHashtags(client *ent.Client, hashtags string) []*ent.Hashtag {
+
+	words := strings.Split(hashtags, ",")
+	ctx := context.Background()
+
+	var result []*ent.Hashtag
+
+	for _, word := range words {
+		var newHashtag *ent.Hashtag
+
+		existHashtag, err := client.Hashtag.Query().Where(hashtag.Hashtag(word)).Only(ctx)
+
+		if err != nil {
+			newHashtag, err = client.Hashtag.Create().SetHashtag(word).Save(ctx)
+			HandleErr(err, "Can't create hashtag : ")
+		} else {
+			newHashtag = existHashtag
+		}
+		result = append(result, newHashtag)
+	}
+
+	fmt.Println(result)
+	return result
 }

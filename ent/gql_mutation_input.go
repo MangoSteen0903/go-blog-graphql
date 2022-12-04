@@ -2,12 +2,95 @@
 
 package ent
 
+// CreatePostInput represents a mutation input for creating posts.
+type CreatePostInput struct {
+	Title      string
+	Context    string
+	Likes      *int
+	HashtagIDs []int
+	OwnerID    *int
+}
+
+// Mutate applies the CreatePostInput on the PostMutation builder.
+func (i *CreatePostInput) Mutate(m *PostMutation) {
+	m.SetTitle(i.Title)
+	m.SetContext(i.Context)
+	if v := i.Likes; v != nil {
+		m.SetLikes(*v)
+	}
+	if v := i.HashtagIDs; len(v) > 0 {
+		m.AddHashtagIDs(v...)
+	}
+	if v := i.OwnerID; v != nil {
+		m.SetOwnerID(*v)
+	}
+}
+
+// SetInput applies the change-set in the CreatePostInput on the PostCreate builder.
+func (c *PostCreate) SetInput(i CreatePostInput) *PostCreate {
+	i.Mutate(c.Mutation())
+	return c
+}
+
+// UpdatePostInput represents a mutation input for updating posts.
+type UpdatePostInput struct {
+	Title            *string
+	Context          *string
+	ClearLikes       bool
+	Likes            *int
+	AddHashtagIDs    []int
+	RemoveHashtagIDs []int
+	ClearOwner       bool
+	OwnerID          *int
+}
+
+// Mutate applies the UpdatePostInput on the PostMutation builder.
+func (i *UpdatePostInput) Mutate(m *PostMutation) {
+	if v := i.Title; v != nil {
+		m.SetTitle(*v)
+	}
+	if v := i.Context; v != nil {
+		m.SetContext(*v)
+	}
+	if i.ClearLikes {
+		m.ClearLikes()
+	}
+	if v := i.Likes; v != nil {
+		m.SetLikes(*v)
+	}
+	if v := i.AddHashtagIDs; len(v) > 0 {
+		m.AddHashtagIDs(v...)
+	}
+	if v := i.RemoveHashtagIDs; len(v) > 0 {
+		m.RemoveHashtagIDs(v...)
+	}
+	if i.ClearOwner {
+		m.ClearOwner()
+	}
+	if v := i.OwnerID; v != nil {
+		m.SetOwnerID(*v)
+	}
+}
+
+// SetInput applies the change-set in the UpdatePostInput on the PostUpdate builder.
+func (c *PostUpdate) SetInput(i UpdatePostInput) *PostUpdate {
+	i.Mutate(c.Mutation())
+	return c
+}
+
+// SetInput applies the change-set in the UpdatePostInput on the PostUpdateOne builder.
+func (c *PostUpdateOne) SetInput(i UpdatePostInput) *PostUpdateOne {
+	i.Mutate(c.Mutation())
+	return c
+}
+
 // CreateUserInput represents a mutation input for creating users.
 type CreateUserInput struct {
 	Username string
 	Password string
 	Location *string
 	IsAdmin  *bool
+	PostIDs  []int
 }
 
 // Mutate applies the CreateUserInput on the UserMutation builder.
@@ -19,6 +102,9 @@ func (i *CreateUserInput) Mutate(m *UserMutation) {
 	}
 	if v := i.IsAdmin; v != nil {
 		m.SetIsAdmin(*v)
+	}
+	if v := i.PostIDs; len(v) > 0 {
+		m.AddPostIDs(v...)
 	}
 }
 
@@ -35,6 +121,8 @@ type UpdateUserInput struct {
 	ClearLocation bool
 	Location      *string
 	IsAdmin       *bool
+	AddPostIDs    []int
+	RemovePostIDs []int
 }
 
 // Mutate applies the UpdateUserInput on the UserMutation builder.
@@ -53,6 +141,12 @@ func (i *UpdateUserInput) Mutate(m *UserMutation) {
 	}
 	if v := i.IsAdmin; v != nil {
 		m.SetIsAdmin(*v)
+	}
+	if v := i.AddPostIDs; len(v) > 0 {
+		m.AddPostIDs(v...)
+	}
+	if v := i.RemovePostIDs; len(v) > 0 {
+		m.RemovePostIDs(v...)
 	}
 }
 

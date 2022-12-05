@@ -61,6 +61,7 @@ type ComplexityRoot struct {
 	Mutation struct {
 		CreatePost func(childComplexity int, input ent.CreatePostInput, hashtags *string) int
 		CreateUser func(childComplexity int, input ent.CreateUserInput, file *graphql.Upload) int
+		DeletePost func(childComplexity int, id int) int
 		Login      func(childComplexity int, username string, password string) int
 		UpdatePost func(childComplexity int, id int, input ent.UpdatePostInput, hashtags *string) int
 		UpdateUser func(childComplexity int, id int, input ent.UpdateUserInput, file *graphql.Upload) int
@@ -118,6 +119,7 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	CreatePost(ctx context.Context, input ent.CreatePostInput, hashtags *string) (*model.Result, error)
 	UpdatePost(ctx context.Context, id int, input ent.UpdatePostInput, hashtags *string) (*model.Result, error)
+	DeletePost(ctx context.Context, id int) (*model.Result, error)
 	CreateUser(ctx context.Context, input ent.CreateUserInput, file *graphql.Upload) (*model.Result, error)
 	UpdateUser(ctx context.Context, id int, input ent.UpdateUserInput, file *graphql.Upload) (*model.Result, error)
 	Login(ctx context.Context, username string, password string) (*model.LoginResult, error)
@@ -212,6 +214,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateUser(childComplexity, args["input"].(ent.CreateUserInput), args["file"].(*graphql.Upload)), true
+
+	case "Mutation.deletePost":
+		if e.complexity.Mutation.DeletePost == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deletePost_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeletePost(childComplexity, args["id"].(int)), true
 
 	case "Mutation.login":
 		if e.complexity.Mutation.Login == nil {
@@ -554,6 +568,7 @@ var sources = []*ast.Source{
 	{Name: "../post/postRepository.graphql", Input: `extend type Mutation {
   createPost(input: CreatePostInput!, hashtags: String): Result!
   updatePost(id: Int!, input: UpdatePostInput!, hashtags: String): Result!
+  deletePost(id: Int!): Result!
 }
 
 extend type Query {
@@ -773,6 +788,21 @@ func (ec *executionContext) field_Mutation_createUser_args(ctx context.Context, 
 		}
 	}
 	args["file"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deletePost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -1364,6 +1394,67 @@ func (ec *executionContext) fieldContext_Mutation_updatePost(ctx context.Context
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updatePost_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deletePost(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deletePost(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeletePost(rctx, fc.Args["id"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Result)
+	fc.Result = res
+	return ec.marshalNResult2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋgraphᚋmodelᚐResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deletePost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "ok":
+				return ec.fieldContext_Result_ok(ctx, field)
+			case "error":
+				return ec.fieldContext_Result_error(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Result", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deletePost_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -5387,6 +5478,15 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updatePost(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "deletePost":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deletePost(ctx, field)
 			})
 
 			if out.Values[i] == graphql.Null {

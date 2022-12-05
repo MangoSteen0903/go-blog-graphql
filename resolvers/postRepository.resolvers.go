@@ -133,6 +133,47 @@ func (r *mutationResolver) UpdatePost(ctx context.Context, id int, input ent.Upd
 	}, nil
 }
 
+// DeletePost is the resolver for the deletePost field.
+func (r *mutationResolver) DeletePost(ctx context.Context, id int) (*model.Result, error) {
+
+	var errMsg string
+	errResult := &model.Result{Ok: false}
+
+	loggedInUser := utils.ForContext(ctx)
+
+	result := utils.CheckLogin(loggedInUser)
+
+	if result != nil {
+		return result, nil
+	}
+
+	post, err := r.client.Post.Query().Where(post.ID(id)).Only(ctx)
+	switch {
+	case post == nil || err != nil:
+		errMsg = "Cannot Retrieve post. Please Try again,"
+		errResult.Error = &errMsg
+		return errResult, nil
+	case post != nil:
+		owner, _ := post.QueryOwner().Only(ctx)
+		if !loggedInUser.IsAdmin || loggedInUser.ID != owner.ID {
+			errMsg = "You're not authorized to delete post."
+			errResult.Error = &errMsg
+			return errResult, nil
+		}
+		err := r.client.Post.DeleteOneID(id).Exec(ctx)
+
+		if err != nil {
+			errMsg = "Cannot Delete Post. Please Try again."
+			errResult.Error = &errMsg
+			return errResult, nil
+		}
+	}
+
+	return &model.Result{
+		Ok: true,
+	}, nil
+}
+
 // SeeUserPost is the resolver for the seeUserPost field.
 func (r *queryResolver) SeeUserPost(ctx context.Context, userID int) ([]*ent.Post, error) {
 	posts, err := r.client.Post.Query().Where(

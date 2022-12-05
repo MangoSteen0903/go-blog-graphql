@@ -1,6 +1,7 @@
 extend type Mutation {
   createPost(input: CreatePostInput!, hashtags: String): Result!
   updatePost(id: Int!, input: UpdatePostInput!, hashtags: String): Result!
+  deletePost(id: Int!): Result!
 }
 
 extend type Query {

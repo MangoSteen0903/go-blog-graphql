@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -28,9 +27,14 @@ type AuthTokenClaims struct {
 	jwt.RegisteredClaims
 }
 
-func HandleErr(err error, msg string) {
+func HandleErr(msg string) model.DefaultResult {
+	result := model.DefaultResult{Ok: false, Error: &msg}
+	return result
+}
+
+func HandleServerErr(err error, msg string) {
 	if err != nil {
-		log.Fatalf("%s : %v", msg, err)
+		fmt.Printf("%v\n", msg)
 	}
 }
 
@@ -39,7 +43,7 @@ func HashingPassword(str *string) *string {
 	return &hash
 }
 
-func BuildToken(id int, username string, jwtKey string) string {
+func BuildToken(id int, username string, jwtKey string) (string, error) {
 	tokenStruct := AuthTokenClaims{
 		UserID:   fmt.Sprintf("%d", id),
 		Username: username,
@@ -52,9 +56,7 @@ func BuildToken(id int, username string, jwtKey string) string {
 
 	newTokenString, err := newToken.SignedString([]byte(jwtKey))
 
-	HandleErr(err, "Can't sign jwt token :")
-
-	return newTokenString
+	return newTokenString, err
 
 }
 
@@ -65,12 +67,12 @@ func GetUser(client *ent.Client, receiveToken string) *ent.User {
 	token, err := jwt.ParseWithClaims(receiveToken, &AuthTokenClaims{}, func(t *jwt.Token) (interface{}, error) {
 		return []byte(os.Getenv("JWTKEY")), nil
 	})
-	HandleErr(err, "JWT token is not valid :")
+	HandleServerErr(err, "JWT token is not valid :")
 	if claims, ok := token.Claims.(*AuthTokenClaims); ok && token.Valid {
 		userId, err := strconv.Atoi(claims.UserID)
-		HandleErr(err, "Can't Convert String to Integer :")
+		HandleServerErr(err, "Can't Convert String to Integer :")
 		loggedInUser, queryErr := client.User.Query().Where(user.ID(userId)).Only(ctx)
-		HandleErr(queryErr, "Can't find User.")
+		HandleServerErr(queryErr, "Can't find User.")
 
 		result = loggedInUser
 	}
@@ -83,11 +85,11 @@ func ForContext(ctx context.Context) *ent.User {
 
 }
 
-func CheckLogin(loggedInUser *ent.User) *model.Result {
+func CheckLogin(loggedInUser *ent.User) *model.DefaultResult {
 	var errMsg string
 	if loggedInUser == nil {
 		errMsg = "You need to login to Perform this action. Try again."
-		return &model.Result{
+		return &model.DefaultResult{
 			Ok:    false,
 			Error: &errMsg,
 		}
@@ -107,7 +109,7 @@ func CreateHashtags(client *ent.Client, hashtags string) []*ent.Hashtag {
 		_, err := client.Hashtag.Query().Where(hashtag.Hashtag(word)).Only(ctx)
 		if err != nil {
 			newHashtag, err = client.Hashtag.Create().SetHashtag(word).Save(ctx)
-			HandleErr(err, "Can't create hashtag : ")
+			HandleServerErr(err, "Can't create hashtag : ")
 			result = append(result, newHashtag)
 		}
 	}

@@ -5,7 +5,6 @@ package resolvers
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/MangoSteen0903/go-blog-graphql/ent"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/post"
@@ -16,9 +15,7 @@ import (
 )
 
 // CreatePost is the resolver for the createPost field.
-func (r *mutationResolver) CreatePost(ctx context.Context, input ent.CreatePostInput, hashtags *string) (*model.Result, error) {
-	var errMsg string
-	errResult := model.Result{Ok: false}
+func (r *mutationResolver) CreatePost(ctx context.Context, input ent.CreatePostInput, hashtags *string) (*model.DefaultResult, error) {
 
 	loggedInUser := utils.ForContext(ctx)
 	result := utils.CheckLogin(loggedInUser)
@@ -28,9 +25,8 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input ent.CreatePostI
 	}
 
 	if !loggedInUser.IsAdmin {
-		errMsg = "You're not authorized to post on a blog."
-		errResult.Error = &errMsg
-		return &errResult, nil
+		result := utils.HandleErr("You're not authorized to post on a blog.")
+		return &result, nil
 	}
 
 	input.OwnerID = &loggedInUser.ID
@@ -41,30 +37,26 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input ent.CreatePostI
 			AddHashtags(newHashtags...).
 			Save(ctx)
 		if err != nil {
-			errMsg = "Can't Create Post."
-			errResult.Error = &errMsg
-			return &errResult, nil
+			result := utils.HandleErr("Cannot create Post")
+			return &result, nil
 		}
 	} else {
 		_, err := r.client.Post.Create().
 			SetInput(input).
 			Save(ctx)
 		if err != nil {
-			errMsg = "Can't Create Post."
-			errResult.Error = &errMsg
-			return &errResult, nil
+			result := utils.HandleErr("Cannot create Post")
+			return &result, nil
 		}
 	}
 
-	return &model.Result{
+	return &model.DefaultResult{
 		Ok: true,
 	}, nil
 }
 
 // UpdatePost is the resolver for the updatePost field.
-func (r *mutationResolver) UpdatePost(ctx context.Context, id int, input ent.UpdatePostInput, hashtags *string) (*model.Result, error) {
-	var errMsg string
-	errResult := model.Result{Ok: false}
+func (r *mutationResolver) UpdatePost(ctx context.Context, id int, input ent.UpdatePostInput, hashtags *string) (*model.DefaultResult, error) {
 
 	loggedInUser := utils.ForContext(ctx)
 
@@ -75,30 +67,26 @@ func (r *mutationResolver) UpdatePost(ctx context.Context, id int, input ent.Upd
 	}
 
 	if !loggedInUser.IsAdmin {
-		errMsg = "You're not authorized to update on a blog."
-		errResult.Error = &errMsg
-		return &errResult, nil
+		result := utils.HandleErr("You're not authorized to update on a blog.")
+		return &result, nil
 	}
 
 	updatedPost, err := r.client.Post.Query().Where(post.ID(id)).Only(ctx)
 
 	if err != nil {
-		errMsg = "Cannot find Post. Please Try again."
-		errResult.Error = &errMsg
-		return &errResult, nil
+		result := utils.HandleErr("Cannot find Post. Please Try again.")
+		return &result, nil
 	}
 
 	postOwner, err := updatedPost.QueryOwner().Only(ctx)
 	if err != nil {
-		errMsg = "Cannot find Post's Owner."
-		errResult.Error = &errMsg
-		return &errResult, nil
+		result := utils.HandleErr("Cannot find Post's Owner.")
+		return &result, nil
 	}
 
 	if loggedInUser.ID != postOwner.ID {
-		errMsg = "Your not authorized to Edit This Post."
-		errResult.Error = &errMsg
-		return &errResult, nil
+		result := utils.HandleErr("You're not authorized to edit this post.")
+		return &result, nil
 	}
 
 	var newHashtags []*ent.Hashtag
@@ -113,31 +101,26 @@ func (r *mutationResolver) UpdatePost(ctx context.Context, id int, input ent.Upd
 			AddHashtags(newHashtags...).
 			Save(ctx)
 		if err != nil {
-			errMsg = "Can't Update Post"
-			errResult.Error = &errMsg
-			return &errResult, nil
+			result := utils.HandleErr("Cannot Update Post.")
+			return &result, nil
 		}
 	case newHashtags == nil || hashtags == nil:
 		_, err := updatedPost.Update().
 			SetInput(input).
 			Save(ctx)
 		if err != nil {
-			errMsg = "Can't Update Post"
-			errResult.Error = &errMsg
-			return &errResult, nil
+			result := utils.HandleErr("Cannot Update Post.")
+			return &result, nil
 		}
 	}
 
-	return &model.Result{
+	return &model.DefaultResult{
 		Ok: true,
 	}, nil
 }
 
 // DeletePost is the resolver for the deletePost field.
-func (r *mutationResolver) DeletePost(ctx context.Context, id int) (*model.Result, error) {
-
-	var errMsg string
-	errResult := &model.Result{Ok: false}
+func (r *mutationResolver) DeletePost(ctx context.Context, id int) (*model.DefaultResult, error) {
 
 	loggedInUser := utils.ForContext(ctx)
 
@@ -150,42 +133,66 @@ func (r *mutationResolver) DeletePost(ctx context.Context, id int) (*model.Resul
 	post, err := r.client.Post.Query().Where(post.ID(id)).Only(ctx)
 	switch {
 	case post == nil || err != nil:
-		errMsg = "Cannot Retrieve post. Please Try again,"
-		errResult.Error = &errMsg
-		return errResult, nil
+		result := utils.HandleErr("Cannot Retrieve post. Please Try again,")
+		return &result, nil
 	case post != nil:
 		owner, _ := post.QueryOwner().Only(ctx)
 		if !loggedInUser.IsAdmin || loggedInUser.ID != owner.ID {
-			errMsg = "You're not authorized to delete post."
-			errResult.Error = &errMsg
-			return errResult, nil
+			result := utils.HandleErr("You're not authorized to delete post.")
+			return &result, nil
 		}
 		err := r.client.Post.DeleteOneID(id).Exec(ctx)
 
 		if err != nil {
-			errMsg = "Cannot Delete Post. Please Try again."
-			errResult.Error = &errMsg
-			return errResult, nil
+			result := utils.HandleErr("Cannot Delete Post. Please Try again.")
+			return &result, nil
 		}
 	}
 
-	return &model.Result{
+	return &model.DefaultResult{
 		Ok: true,
 	}, nil
 }
 
+// SeePost is the resolver for the seePost field.
+func (r *queryResolver) SeePost(ctx context.Context, id int) (*model.PostResult, error) {
+	var errMsg string
+	errResult := &model.PostResult{Ok: false}
+	post, err := r.client.Post.Query().Where(post.ID(id)).Only(ctx)
+
+	if err != nil {
+		errMsg = "Cannot Find Post. Please Try again."
+		errResult.Error = &errMsg
+		return errResult, nil
+	}
+
+	return &model.PostResult{
+		Ok:   true,
+		Post: post,
+	}, nil
+}
+
 // SeeUserPost is the resolver for the seeUserPost field.
-func (r *queryResolver) SeeUserPost(ctx context.Context, userID int) ([]*ent.Post, error) {
+func (r *queryResolver) SeeUserPost(ctx context.Context, userID int) (*model.PostsResult, error) {
+	var errMsg string
+	errResult := &model.PostsResult{Ok: false}
+
 	posts, err := r.client.Post.Query().Where(
 		post.HasOwnerWith(
 			user.ID(userID),
 		),
 	).All(ctx)
 
-	utils.HandleErr(err, "Can't find User's Post.")
+	if err != nil {
+		errMsg = "Cannot find User's Post"
+		errResult.Error = &errMsg
+		return errResult, nil
+	}
 
-	fmt.Println(posts)
-	return posts, nil
+	return &model.PostsResult{
+		Ok:    true,
+		Posts: posts,
+	}, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

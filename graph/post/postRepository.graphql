@@ -1,9 +1,14 @@
 extend type Mutation {
-  createPost(input: CreatePostInput!, hashtags: String): Result!
-  updatePost(id: Int!, input: UpdatePostInput!, hashtags: String): Result!
-  deletePost(id: Int!): Result!
+  createPost(input: CreatePostInput!, hashtags: String): DefaultResult!
+  updatePost(
+    id: Int!
+    input: UpdatePostInput!
+    hashtags: String
+  ): DefaultResult!
+  deletePost(id: Int!): DefaultResult!
 }
 
 extend type Query {
-  seeUserPost(user_id: Int!): [Post]!
+  seePost(id: Int!): PostResult!
+  seeUserPost(user_id: Int!): PostsResult!
 }

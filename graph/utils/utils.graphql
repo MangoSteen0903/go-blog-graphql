@@ -1,17 +1,39 @@
-type Result {
+interface Result {
   ok: Boolean!
   error: String
 }
 
-scalar Map
-type LoginResult {
+type DefaultResult implements Result {
+  ok: Boolean!
+  error: String
+}
+
+type LoginResult implements Result {
   ok: Boolean!
   error: String
   token: String
 }
 
-type UserResult {
+type UserResult implements Result {
   ok: Boolean!
   error: String
   user: User
+}
+
+type UsersResult implements Result {
+  ok: Boolean!
+  error: String
+  users: [User]
+}
+
+type PostResult implements Result {
+  ok: Boolean!
+  error: String
+  post: Post
+}
+
+type PostsResult implements Result {
+  ok: Boolean!
+  error: String
+  posts: [Post]
 }

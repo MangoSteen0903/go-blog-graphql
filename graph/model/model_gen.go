@@ -6,19 +6,67 @@ import (
 	"github.com/MangoSteen0903/go-blog-graphql/ent"
 )
 
+type Result interface {
+	IsResult()
+	GetOk() bool
+	GetError() *string
+}
+
+type DefaultResult struct {
+	Ok    bool    `json:"ok"`
+	Error *string `json:"error"`
+}
+
+func (DefaultResult) IsResult()              {}
+func (this DefaultResult) GetOk() bool       { return this.Ok }
+func (this DefaultResult) GetError() *string { return this.Error }
+
 type LoginResult struct {
 	Ok    bool    `json:"ok"`
 	Error *string `json:"error"`
 	Token *string `json:"token"`
 }
 
-type Result struct {
-	Ok    bool    `json:"ok"`
-	Error *string `json:"error"`
+func (LoginResult) IsResult()              {}
+func (this LoginResult) GetOk() bool       { return this.Ok }
+func (this LoginResult) GetError() *string { return this.Error }
+
+type PostResult struct {
+	Ok    bool      `json:"ok"`
+	Error *string   `json:"error"`
+	Post  *ent.Post `json:"post"`
 }
+
+func (PostResult) IsResult()              {}
+func (this PostResult) GetOk() bool       { return this.Ok }
+func (this PostResult) GetError() *string { return this.Error }
+
+type PostsResult struct {
+	Ok    bool        `json:"ok"`
+	Error *string     `json:"error"`
+	Posts []*ent.Post `json:"posts"`
+}
+
+func (PostsResult) IsResult()              {}
+func (this PostsResult) GetOk() bool       { return this.Ok }
+func (this PostsResult) GetError() *string { return this.Error }
 
 type UserResult struct {
 	Ok    bool      `json:"ok"`
 	Error *string   `json:"error"`
 	User  *ent.User `json:"user"`
 }
+
+func (UserResult) IsResult()              {}
+func (this UserResult) GetOk() bool       { return this.Ok }
+func (this UserResult) GetError() *string { return this.Error }
+
+type UsersResult struct {
+	Ok    bool        `json:"ok"`
+	Error *string     `json:"error"`
+	Users []*ent.User `json:"users"`
+}
+
+func (UsersResult) IsResult()              {}
+func (this UsersResult) GetOk() bool       { return this.Ok }
+func (this UsersResult) GetError() *string { return this.Error }

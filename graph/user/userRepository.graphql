@@ -8,5 +8,5 @@ extend type Mutation {
 
 extend type Query {
   seeUser(id: Int!): UserResult!
-  seeUsers: [User]!
+  seeUsers: UsersResult!
 }

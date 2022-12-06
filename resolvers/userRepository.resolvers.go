@@ -18,7 +18,7 @@ import (
 )
 
 // CreateUser is the resolver for the createUser field.
-func (r *mutationResolver) CreateUser(ctx context.Context, input ent.CreateUserInput, file *graphql.Upload) (*model.Result, error) {
+func (r *mutationResolver) CreateUser(ctx context.Context, input ent.CreateUserInput, file *graphql.Upload) (model.Result, error) {
 	newHash := utils.HashingPassword(&input.Password)
 	input.Password = *newHash
 
@@ -29,7 +29,8 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input ent.CreateUserI
 		newFile, err := os.Create(userFileName)
 
 		if err != nil {
-			utils.HandleErr(err, "Error Opening file: ")
+			result := utils.HandleErr("Error Opening file")
+			return result, nil
 		}
 
 		io.Copy(newFile, file.File)
@@ -41,46 +42,33 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input ent.CreateUserI
 		SetInput(input).
 		Save(ctx)
 
-	errMsg := fmt.Sprintf("%v", err)
-
 	if ent.IsConstraintError(err) {
-		return &model.Result{
-			Ok:    false,
-			Error: &errMsg,
-		}, nil
+		result := utils.HandleErr("User name is already Taken. Please Try again.")
+		return result, nil
 	}
 
-	return &model.Result{
+	return &model.DefaultResult{
 		Ok:    true,
 		Error: nil,
 	}, nil
 }
 
 // UpdateUser is the resolver for the updateUser field.
-func (r *mutationResolver) UpdateUser(ctx context.Context, id int, input ent.UpdateUserInput, file *graphql.Upload) (*model.Result, error) {
+func (r *mutationResolver) UpdateUser(ctx context.Context, id int, input ent.UpdateUserInput, file *graphql.Upload) (model.Result, error) {
 	loggedInUser := utils.ForContext(ctx)
-
-	var errMsg string
 	if loggedInUser == nil {
-		errMsg = "You need to login to Perform this action. Try again."
-		return &model.Result{
-			Ok:    false,
-			Error: &errMsg,
-		}, nil
+		result := utils.HandleErr("You have to login to perform this action.")
+		return result, nil
 	}
 	if loggedInUser.ID != id {
-		errMsg = "Your not authorized to Update this user. Try again."
-		return &model.Result{
-			Ok:    false,
-			Error: &errMsg,
-		}, nil
+		result := utils.HandleErr("Your not authorized to Update this user. Try again.")
+		return result, nil
 	}
 
 	input.Password = utils.HashingPassword(input.Password)
 	loggedInUser.Update().SetInput(input).Save(ctx)
 
-	fmt.Println(file)
-	return &model.Result{
+	return &model.DefaultResult{
 		Ok: true,
 	}, nil
 }
@@ -100,14 +88,18 @@ func (r *mutationResolver) Login(ctx context.Context, username string, password 
 	}
 
 	if *userPW != user.Password {
-		errMsg := "Password does not match. Try again."
-		return &model.LoginResult{
-			Ok:    false,
-			Error: &errMsg,
-		}, nil
+		result := utils.HandleErr("Password does not match. Try again.")
+		newResult := model.LoginResult{Ok: result.Ok, Error: result.Error}
+		return &newResult, nil
 	}
 
-	newToken := utils.BuildToken(user.ID, username, os.Getenv("JWTKEY"))
+	newToken, err := utils.BuildToken(user.ID, username, os.Getenv("JWTKEY"))
+
+	if err != nil {
+		result := utils.HandleErr("Cannot Create Token. Please Try again.")
+		newResult := model.LoginResult{Ok: result.Ok, Error: result.Error}
+		return &newResult, nil
+	}
 
 	return &model.LoginResult{
 		Ok:    true,
@@ -133,8 +125,15 @@ func (r *queryResolver) SeeUser(ctx context.Context, id int) (*model.UserResult,
 }
 
 // SeeUsers is the resolver for the seeUsers field.
-func (r *queryResolver) SeeUsers(ctx context.Context) ([]*ent.User, error) {
+func (r *queryResolver) SeeUsers(ctx context.Context) (*model.UsersResult, error) {
 	users, err := r.client.User.Query().All(ctx)
-	utils.HandleErr(err, "Can't Query all Users :")
-	return users, nil
+	if err != nil {
+		result := utils.HandleErr("Cannot retrive User. Please Try again.")
+		newResult := &model.UsersResult{Ok: result.Ok, Error: result.Error}
+		return newResult, nil
+	}
+	return &model.UsersResult{
+		Ok:    true,
+		Users: users,
+	}, nil
 }

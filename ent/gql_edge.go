@@ -20,6 +20,30 @@ func (h *Hashtag) Posts(ctx context.Context) (result []*Post, err error) {
 	return result, err
 }
 
+func (l *Like) Posts(ctx context.Context) (result []*Post, err error) {
+	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
+		result, err = l.NamedPosts(graphql.GetFieldContext(ctx).Field.Alias)
+	} else {
+		result, err = l.Edges.PostsOrErr()
+	}
+	if IsNotLoaded(err) {
+		result, err = l.QueryPosts().All(ctx)
+	}
+	return result, err
+}
+
+func (l *Like) Owner(ctx context.Context) (result []*User, err error) {
+	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
+		result, err = l.NamedOwner(graphql.GetFieldContext(ctx).Field.Alias)
+	} else {
+		result, err = l.Edges.OwnerOrErr()
+	}
+	if IsNotLoaded(err) {
+		result, err = l.QueryOwner().All(ctx)
+	}
+	return result, err
+}
+
 func (po *Post) Hashtags(ctx context.Context) (result []*Hashtag, err error) {
 	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
 		result, err = po.NamedHashtags(graphql.GetFieldContext(ctx).Field.Alias)
@@ -28,6 +52,18 @@ func (po *Post) Hashtags(ctx context.Context) (result []*Hashtag, err error) {
 	}
 	if IsNotLoaded(err) {
 		result, err = po.QueryHashtags().All(ctx)
+	}
+	return result, err
+}
+
+func (po *Post) Likes(ctx context.Context) (result []*Like, err error) {
+	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
+		result, err = po.NamedLikes(graphql.GetFieldContext(ctx).Field.Alias)
+	} else {
+		result, err = po.Edges.LikesOrErr()
+	}
+	if IsNotLoaded(err) {
+		result, err = po.QueryLikes().All(ctx)
 	}
 	return result, err
 }
@@ -48,6 +84,18 @@ func (u *User) Posts(ctx context.Context) (result []*Post, err error) {
 	}
 	if IsNotLoaded(err) {
 		result, err = u.QueryPosts().All(ctx)
+	}
+	return result, err
+}
+
+func (u *User) Likes(ctx context.Context) (result []*Like, err error) {
+	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
+		result, err = u.NamedLikes(graphql.GetFieldContext(ctx).Field.Alias)
+	} else {
+		result, err = u.Edges.LikesOrErr()
+	}
+	if IsNotLoaded(err) {
+		result, err = u.QueryLikes().All(ctx)
 	}
 	return result, err
 }

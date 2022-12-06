@@ -25,7 +25,6 @@ func main() {
 	err := godotenv.Load(".env")
 	ctx := context.Background()
 	utils.HandleServerErr(err, "Can't Load .env File : ")
-
 	portUrl := fmt.Sprintf(":%v", PORT)
 	config := fmt.Sprintf("host=%v port=%v user=%v dbname=%v password=%v sslmode=%v",
 		os.Getenv("HOST"),
@@ -35,6 +34,7 @@ func main() {
 		os.Getenv("PASSWORD"),
 		"disable",
 	)
+
 	client, err := ent.Open("postgres", config)
 	utils.HandleServerErr(err, "Can't Open ent Client : ")
 	if err := client.Schema.Create(

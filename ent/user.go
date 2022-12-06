@@ -37,13 +37,16 @@ type User struct {
 type UserEdges struct {
 	// Posts holds the value of the Posts edge.
 	Posts []*Post `json:"Posts,omitempty"`
+	// Likes holds the value of the Likes edge.
+	Likes []*Like `json:"Likes,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 	// totalCount holds the count of the edges above.
-	totalCount [1]map[string]int
+	totalCount [2]map[string]int
 
 	namedPosts map[string][]*Post
+	namedLikes map[string][]*Like
 }
 
 // PostsOrErr returns the Posts value or an error if the edge
@@ -53,6 +56,15 @@ func (e UserEdges) PostsOrErr() ([]*Post, error) {
 		return e.Posts, nil
 	}
 	return nil, &NotLoadedError{edge: "Posts"}
+}
+
+// LikesOrErr returns the Likes value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) LikesOrErr() ([]*Like, error) {
+	if e.loadedTypes[1] {
+		return e.Likes, nil
+	}
+	return nil, &NotLoadedError{edge: "Likes"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -135,6 +147,11 @@ func (u *User) QueryPosts() *PostQuery {
 	return (&UserClient{config: u.config}).QueryPosts(u)
 }
 
+// QueryLikes queries the "Likes" edge of the User entity.
+func (u *User) QueryLikes() *LikeQuery {
+	return (&UserClient{config: u.config}).QueryLikes(u)
+}
+
 // Update returns a builder for updating this User.
 // Note that you need to call User.Unwrap() before calling this method if this User
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -200,6 +217,30 @@ func (u *User) appendNamedPosts(name string, edges ...*Post) {
 		u.Edges.namedPosts[name] = []*Post{}
 	} else {
 		u.Edges.namedPosts[name] = append(u.Edges.namedPosts[name], edges...)
+	}
+}
+
+// NamedLikes returns the Likes named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (u *User) NamedLikes(name string) ([]*Like, error) {
+	if u.Edges.namedLikes == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := u.Edges.namedLikes[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (u *User) appendNamedLikes(name string, edges ...*Like) {
+	if u.Edges.namedLikes == nil {
+		u.Edges.namedLikes = make(map[string][]*Like)
+	}
+	if len(edges) == 0 {
+		u.Edges.namedLikes[name] = []*Like{}
+	} else {
+		u.Edges.namedLikes[name] = append(u.Edges.namedLikes[name], edges...)
 	}
 }
 

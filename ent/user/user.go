@@ -25,6 +25,8 @@ const (
 	FieldCreatedAt = "created_at"
 	// EdgePosts holds the string denoting the posts edge name in mutations.
 	EdgePosts = "Posts"
+	// EdgeLikes holds the string denoting the likes edge name in mutations.
+	EdgeLikes = "Likes"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// PostsTable is the table that holds the Posts relation/edge.
@@ -34,6 +36,11 @@ const (
 	PostsInverseTable = "posts"
 	// PostsColumn is the table column denoting the Posts relation/edge.
 	PostsColumn = "user_posts"
+	// LikesTable is the table that holds the Likes relation/edge. The primary key declared below.
+	LikesTable = "user_Likes"
+	// LikesInverseTable is the table name for the Like entity.
+	// It exists in this package in order to avoid circular dependency with the "like" package.
+	LikesInverseTable = "likes"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -46,6 +53,12 @@ var Columns = []string{
 	FieldIsAdmin,
 	FieldCreatedAt,
 }
+
+var (
+	// LikesPrimaryKey and LikesColumn2 are the table columns denoting the
+	// primary key for the Likes relation (M2M).
+	LikesPrimaryKey = []string{"user_id", "like_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {

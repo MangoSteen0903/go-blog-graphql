@@ -3,6 +3,8 @@
 package post
 
 import (
+	"time"
+
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/predicate"
@@ -93,10 +95,10 @@ func Context(v string) predicate.Post {
 	})
 }
 
-// Likes applies equality check predicate on the "Likes" field. It's identical to LikesEQ.
-func Likes(v int) predicate.Post {
+// CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
+func CreatedAt(v time.Time) predicate.Post {
 	return predicate.Post(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldLikes), v))
+		s.Where(sql.EQ(s.C(FieldCreatedAt), v))
 	})
 }
 
@@ -298,81 +300,67 @@ func ContextContainsFold(v string) predicate.Post {
 	})
 }
 
-// LikesEQ applies the EQ predicate on the "Likes" field.
-func LikesEQ(v int) predicate.Post {
+// CreatedAtEQ applies the EQ predicate on the "created_at" field.
+func CreatedAtEQ(v time.Time) predicate.Post {
 	return predicate.Post(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldLikes), v))
+		s.Where(sql.EQ(s.C(FieldCreatedAt), v))
 	})
 }
 
-// LikesNEQ applies the NEQ predicate on the "Likes" field.
-func LikesNEQ(v int) predicate.Post {
+// CreatedAtNEQ applies the NEQ predicate on the "created_at" field.
+func CreatedAtNEQ(v time.Time) predicate.Post {
 	return predicate.Post(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldLikes), v))
+		s.Where(sql.NEQ(s.C(FieldCreatedAt), v))
 	})
 }
 
-// LikesIn applies the In predicate on the "Likes" field.
-func LikesIn(vs ...int) predicate.Post {
+// CreatedAtIn applies the In predicate on the "created_at" field.
+func CreatedAtIn(vs ...time.Time) predicate.Post {
 	v := make([]any, len(vs))
 	for i := range v {
 		v[i] = vs[i]
 	}
 	return predicate.Post(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldLikes), v...))
+		s.Where(sql.In(s.C(FieldCreatedAt), v...))
 	})
 }
 
-// LikesNotIn applies the NotIn predicate on the "Likes" field.
-func LikesNotIn(vs ...int) predicate.Post {
+// CreatedAtNotIn applies the NotIn predicate on the "created_at" field.
+func CreatedAtNotIn(vs ...time.Time) predicate.Post {
 	v := make([]any, len(vs))
 	for i := range v {
 		v[i] = vs[i]
 	}
 	return predicate.Post(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldLikes), v...))
+		s.Where(sql.NotIn(s.C(FieldCreatedAt), v...))
 	})
 }
 
-// LikesGT applies the GT predicate on the "Likes" field.
-func LikesGT(v int) predicate.Post {
+// CreatedAtGT applies the GT predicate on the "created_at" field.
+func CreatedAtGT(v time.Time) predicate.Post {
 	return predicate.Post(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldLikes), v))
+		s.Where(sql.GT(s.C(FieldCreatedAt), v))
 	})
 }
 
-// LikesGTE applies the GTE predicate on the "Likes" field.
-func LikesGTE(v int) predicate.Post {
+// CreatedAtGTE applies the GTE predicate on the "created_at" field.
+func CreatedAtGTE(v time.Time) predicate.Post {
 	return predicate.Post(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldLikes), v))
+		s.Where(sql.GTE(s.C(FieldCreatedAt), v))
 	})
 }
 
-// LikesLT applies the LT predicate on the "Likes" field.
-func LikesLT(v int) predicate.Post {
+// CreatedAtLT applies the LT predicate on the "created_at" field.
+func CreatedAtLT(v time.Time) predicate.Post {
 	return predicate.Post(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldLikes), v))
+		s.Where(sql.LT(s.C(FieldCreatedAt), v))
 	})
 }
 
-// LikesLTE applies the LTE predicate on the "Likes" field.
-func LikesLTE(v int) predicate.Post {
+// CreatedAtLTE applies the LTE predicate on the "created_at" field.
+func CreatedAtLTE(v time.Time) predicate.Post {
 	return predicate.Post(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldLikes), v))
-	})
-}
-
-// LikesIsNil applies the IsNil predicate on the "Likes" field.
-func LikesIsNil() predicate.Post {
-	return predicate.Post(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldLikes)))
-	})
-}
-
-// LikesNotNil applies the NotNil predicate on the "Likes" field.
-func LikesNotNil() predicate.Post {
-	return predicate.Post(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldLikes)))
+		s.Where(sql.LTE(s.C(FieldCreatedAt), v))
 	})
 }
 
@@ -395,6 +383,34 @@ func HasHashtagsWith(preds ...predicate.Hashtag) predicate.Post {
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(HashtagsInverseTable, FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, false, HashtagsTable, HashtagsPrimaryKey...),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasLikes applies the HasEdge predicate on the "Likes" edge.
+func HasLikes() predicate.Post {
+	return predicate.Post(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(LikesTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, LikesTable, LikesPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasLikesWith applies the HasEdge predicate on the "Likes" edge with a given conditions (other predicates).
+func HasLikesWith(preds ...predicate.Like) predicate.Post {
+	return predicate.Post(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(LikesInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, LikesTable, LikesPrimaryKey...),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

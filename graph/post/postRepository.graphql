@@ -6,6 +6,7 @@ extend type Mutation {
     hashtags: String
   ): DefaultResult!
   deletePost(id: Int!): DefaultResult!
+  toggleLike(id: Int!): DefaultResult!
 }
 
 extend type Query {

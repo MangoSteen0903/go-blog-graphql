@@ -15,6 +15,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/errcode"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/hashtag"
+	"github.com/MangoSteen0903/go-blog-graphql/ent/like"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/post"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/user"
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -471,6 +472,237 @@ func (h *Hashtag) ToEdge(order *HashtagOrder) *HashtagEdge {
 	return &HashtagEdge{
 		Node:   h,
 		Cursor: order.Field.toCursor(h),
+	}
+}
+
+// LikeEdge is the edge representation of Like.
+type LikeEdge struct {
+	Node   *Like  `json:"node"`
+	Cursor Cursor `json:"cursor"`
+}
+
+// LikeConnection is the connection containing edges to Like.
+type LikeConnection struct {
+	Edges      []*LikeEdge `json:"edges"`
+	PageInfo   PageInfo    `json:"pageInfo"`
+	TotalCount int         `json:"totalCount"`
+}
+
+func (c *LikeConnection) build(nodes []*Like, pager *likePager, after *Cursor, first *int, before *Cursor, last *int) {
+	c.PageInfo.HasNextPage = before != nil
+	c.PageInfo.HasPreviousPage = after != nil
+	if first != nil && *first+1 == len(nodes) {
+		c.PageInfo.HasNextPage = true
+		nodes = nodes[:len(nodes)-1]
+	} else if last != nil && *last+1 == len(nodes) {
+		c.PageInfo.HasPreviousPage = true
+		nodes = nodes[:len(nodes)-1]
+	}
+	var nodeAt func(int) *Like
+	if last != nil {
+		n := len(nodes) - 1
+		nodeAt = func(i int) *Like {
+			return nodes[n-i]
+		}
+	} else {
+		nodeAt = func(i int) *Like {
+			return nodes[i]
+		}
+	}
+	c.Edges = make([]*LikeEdge, len(nodes))
+	for i := range nodes {
+		node := nodeAt(i)
+		c.Edges[i] = &LikeEdge{
+			Node:   node,
+			Cursor: pager.toCursor(node),
+		}
+	}
+	if l := len(c.Edges); l > 0 {
+		c.PageInfo.StartCursor = &c.Edges[0].Cursor
+		c.PageInfo.EndCursor = &c.Edges[l-1].Cursor
+	}
+	if c.TotalCount == 0 {
+		c.TotalCount = len(nodes)
+	}
+}
+
+// LikePaginateOption enables pagination customization.
+type LikePaginateOption func(*likePager) error
+
+// WithLikeOrder configures pagination ordering.
+func WithLikeOrder(order *LikeOrder) LikePaginateOption {
+	if order == nil {
+		order = DefaultLikeOrder
+	}
+	o := *order
+	return func(pager *likePager) error {
+		if err := o.Direction.Validate(); err != nil {
+			return err
+		}
+		if o.Field == nil {
+			o.Field = DefaultLikeOrder.Field
+		}
+		pager.order = &o
+		return nil
+	}
+}
+
+// WithLikeFilter configures pagination filter.
+func WithLikeFilter(filter func(*LikeQuery) (*LikeQuery, error)) LikePaginateOption {
+	return func(pager *likePager) error {
+		if filter == nil {
+			return errors.New("LikeQuery filter cannot be nil")
+		}
+		pager.filter = filter
+		return nil
+	}
+}
+
+type likePager struct {
+	order  *LikeOrder
+	filter func(*LikeQuery) (*LikeQuery, error)
+}
+
+func newLikePager(opts []LikePaginateOption) (*likePager, error) {
+	pager := &likePager{}
+	for _, opt := range opts {
+		if err := opt(pager); err != nil {
+			return nil, err
+		}
+	}
+	if pager.order == nil {
+		pager.order = DefaultLikeOrder
+	}
+	return pager, nil
+}
+
+func (p *likePager) applyFilter(query *LikeQuery) (*LikeQuery, error) {
+	if p.filter != nil {
+		return p.filter(query)
+	}
+	return query, nil
+}
+
+func (p *likePager) toCursor(l *Like) Cursor {
+	return p.order.Field.toCursor(l)
+}
+
+func (p *likePager) applyCursors(query *LikeQuery, after, before *Cursor) *LikeQuery {
+	for _, predicate := range cursorsToPredicates(
+		p.order.Direction, after, before,
+		p.order.Field.field, DefaultLikeOrder.Field.field,
+	) {
+		query = query.Where(predicate)
+	}
+	return query
+}
+
+func (p *likePager) applyOrder(query *LikeQuery, reverse bool) *LikeQuery {
+	direction := p.order.Direction
+	if reverse {
+		direction = direction.reverse()
+	}
+	query = query.Order(direction.orderFunc(p.order.Field.field))
+	if p.order.Field != DefaultLikeOrder.Field {
+		query = query.Order(direction.orderFunc(DefaultLikeOrder.Field.field))
+	}
+	return query
+}
+
+func (p *likePager) orderExpr(reverse bool) sql.Querier {
+	direction := p.order.Direction
+	if reverse {
+		direction = direction.reverse()
+	}
+	return sql.ExprFunc(func(b *sql.Builder) {
+		b.Ident(p.order.Field.field).Pad().WriteString(string(direction))
+		if p.order.Field != DefaultLikeOrder.Field {
+			b.Comma().Ident(DefaultLikeOrder.Field.field).Pad().WriteString(string(direction))
+		}
+	})
+}
+
+// Paginate executes the query and returns a relay based cursor connection to Like.
+func (l *LikeQuery) Paginate(
+	ctx context.Context, after *Cursor, first *int,
+	before *Cursor, last *int, opts ...LikePaginateOption,
+) (*LikeConnection, error) {
+	if err := validateFirstLast(first, last); err != nil {
+		return nil, err
+	}
+	pager, err := newLikePager(opts)
+	if err != nil {
+		return nil, err
+	}
+	if l, err = pager.applyFilter(l); err != nil {
+		return nil, err
+	}
+	conn := &LikeConnection{Edges: []*LikeEdge{}}
+	ignoredEdges := !hasCollectedField(ctx, edgesField)
+	if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
+		hasPagination := after != nil || first != nil || before != nil || last != nil
+		if hasPagination || ignoredEdges {
+			if conn.TotalCount, err = l.Clone().Count(ctx); err != nil {
+				return nil, err
+			}
+			conn.PageInfo.HasNextPage = first != nil && conn.TotalCount > 0
+			conn.PageInfo.HasPreviousPage = last != nil && conn.TotalCount > 0
+		}
+	}
+	if ignoredEdges || (first != nil && *first == 0) || (last != nil && *last == 0) {
+		return conn, nil
+	}
+
+	l = pager.applyCursors(l, after, before)
+	l = pager.applyOrder(l, last != nil)
+	if limit := paginateLimit(first, last); limit != 0 {
+		l.Limit(limit)
+	}
+	if field := collectedField(ctx, edgesField, nodeField); field != nil {
+		if err := l.collectField(ctx, graphql.GetOperationContext(ctx), *field, []string{edgesField, nodeField}); err != nil {
+			return nil, err
+		}
+	}
+
+	nodes, err := l.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	conn.build(nodes, pager, after, first, before, last)
+	return conn, nil
+}
+
+// LikeOrderField defines the ordering field of Like.
+type LikeOrderField struct {
+	field    string
+	toCursor func(*Like) Cursor
+}
+
+// LikeOrder defines the ordering of Like.
+type LikeOrder struct {
+	Direction OrderDirection  `json:"direction"`
+	Field     *LikeOrderField `json:"field"`
+}
+
+// DefaultLikeOrder is the default ordering of Like.
+var DefaultLikeOrder = &LikeOrder{
+	Direction: OrderDirectionAsc,
+	Field: &LikeOrderField{
+		field: like.FieldID,
+		toCursor: func(l *Like) Cursor {
+			return Cursor{ID: l.ID}
+		},
+	},
+}
+
+// ToEdge converts Like into LikeEdge.
+func (l *Like) ToEdge(order *LikeOrder) *LikeEdge {
+	if order == nil {
+		order = DefaultLikeOrder
+	}
+	return &LikeEdge{
+		Node:   l,
+		Cursor: order.Field.toCursor(l),
 	}
 }
 

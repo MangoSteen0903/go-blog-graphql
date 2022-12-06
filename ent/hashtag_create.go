@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -23,6 +24,20 @@ type HashtagCreate struct {
 // SetHashtag sets the "hashtag" field.
 func (hc *HashtagCreate) SetHashtag(s string) *HashtagCreate {
 	hc.mutation.SetHashtag(s)
+	return hc
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (hc *HashtagCreate) SetCreatedAt(t time.Time) *HashtagCreate {
+	hc.mutation.SetCreatedAt(t)
+	return hc
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (hc *HashtagCreate) SetNillableCreatedAt(t *time.Time) *HashtagCreate {
+	if t != nil {
+		hc.SetCreatedAt(*t)
+	}
 	return hc
 }
 
@@ -52,6 +67,7 @@ func (hc *HashtagCreate) Save(ctx context.Context) (*Hashtag, error) {
 		err  error
 		node *Hashtag
 	)
+	hc.defaults()
 	if len(hc.hooks) == 0 {
 		if err = hc.check(); err != nil {
 			return nil, err
@@ -115,10 +131,21 @@ func (hc *HashtagCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (hc *HashtagCreate) defaults() {
+	if _, ok := hc.mutation.CreatedAt(); !ok {
+		v := hashtag.DefaultCreatedAt()
+		hc.mutation.SetCreatedAt(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (hc *HashtagCreate) check() error {
 	if _, ok := hc.mutation.Hashtag(); !ok {
 		return &ValidationError{Name: "hashtag", err: errors.New(`ent: missing required field "Hashtag.hashtag"`)}
+	}
+	if _, ok := hc.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Hashtag.created_at"`)}
 	}
 	return nil
 }
@@ -150,6 +177,10 @@ func (hc *HashtagCreate) createSpec() (*Hashtag, *sqlgraph.CreateSpec) {
 	if value, ok := hc.mutation.Hashtag(); ok {
 		_spec.SetField(hashtag.FieldHashtag, field.TypeString, value)
 		_node.Hashtag = value
+	}
+	if value, ok := hc.mutation.CreatedAt(); ok {
+		_spec.SetField(hashtag.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
 	}
 	if nodes := hc.mutation.PostsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -187,6 +218,7 @@ func (hcb *HashtagCreateBulk) Save(ctx context.Context) ([]*Hashtag, error) {
 	for i := range hcb.builders {
 		func(i int, root context.Context) {
 			builder := hcb.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*HashtagMutation)
 				if !ok {

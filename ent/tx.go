@@ -14,6 +14,8 @@ type Tx struct {
 	config
 	// Hashtag is the client for interacting with the Hashtag builders.
 	Hashtag *HashtagClient
+	// Like is the client for interacting with the Like builders.
+	Like *LikeClient
 	// Post is the client for interacting with the Post builders.
 	Post *PostClient
 	// User is the client for interacting with the User builders.
@@ -150,6 +152,7 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Hashtag = NewHashtagClient(tx.config)
+	tx.Like = NewLikeClient(tx.config)
 	tx.Post = NewPostClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }

@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -31,6 +32,20 @@ func (hu *HashtagUpdate) Where(ps ...predicate.Hashtag) *HashtagUpdate {
 // SetHashtag sets the "hashtag" field.
 func (hu *HashtagUpdate) SetHashtag(s string) *HashtagUpdate {
 	hu.mutation.SetHashtag(s)
+	return hu
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (hu *HashtagUpdate) SetCreatedAt(t time.Time) *HashtagUpdate {
+	hu.mutation.SetCreatedAt(t)
+	return hu
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (hu *HashtagUpdate) SetNillableCreatedAt(t *time.Time) *HashtagUpdate {
+	if t != nil {
+		hu.SetCreatedAt(*t)
+	}
 	return hu
 }
 
@@ -150,6 +165,9 @@ func (hu *HashtagUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := hu.mutation.Hashtag(); ok {
 		_spec.SetField(hashtag.FieldHashtag, field.TypeString, value)
 	}
+	if value, ok := hu.mutation.CreatedAt(); ok {
+		_spec.SetField(hashtag.FieldCreatedAt, field.TypeTime, value)
+	}
 	if hu.mutation.PostsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -226,6 +244,20 @@ type HashtagUpdateOne struct {
 // SetHashtag sets the "hashtag" field.
 func (huo *HashtagUpdateOne) SetHashtag(s string) *HashtagUpdateOne {
 	huo.mutation.SetHashtag(s)
+	return huo
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (huo *HashtagUpdateOne) SetCreatedAt(t time.Time) *HashtagUpdateOne {
+	huo.mutation.SetCreatedAt(t)
+	return huo
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (huo *HashtagUpdateOne) SetNillableCreatedAt(t *time.Time) *HashtagUpdateOne {
+	if t != nil {
+		huo.SetCreatedAt(*t)
+	}
 	return huo
 }
 
@@ -374,6 +406,9 @@ func (huo *HashtagUpdateOne) sqlSave(ctx context.Context) (_node *Hashtag, err e
 	}
 	if value, ok := huo.mutation.Hashtag(); ok {
 		_spec.SetField(hashtag.FieldHashtag, field.TypeString, value)
+	}
+	if value, ok := huo.mutation.CreatedAt(); ok {
+		_spec.SetField(hashtag.FieldCreatedAt, field.TypeTime, value)
 	}
 	if huo.mutation.PostsCleared() {
 		edge := &sqlgraph.EdgeSpec{

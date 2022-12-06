@@ -14,6 +14,7 @@ import (
 	"entgo.io/ent/dialect/sql/schema"
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/hashtag"
+	"github.com/MangoSteen0903/go-blog-graphql/ent/like"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/post"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/user"
 	"github.com/hashicorp/go-multierror"
@@ -27,6 +28,9 @@ type Noder interface {
 
 // IsNode implements the Node interface check for GQLGen.
 func (n *Hashtag) IsNode() {}
+
+// IsNode implements the Node interface check for GQLGen.
+func (n *Like) IsNode() {}
 
 // IsNode implements the Node interface check for GQLGen.
 func (n *Post) IsNode() {}
@@ -96,6 +100,18 @@ func (c *Client) noder(ctx context.Context, table string, id int) (Noder, error)
 		query := c.Hashtag.Query().
 			Where(hashtag.ID(id))
 		query, err := query.CollectFields(ctx, "Hashtag")
+		if err != nil {
+			return nil, err
+		}
+		n, err := query.Only(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return n, nil
+	case like.Table:
+		query := c.Like.Query().
+			Where(like.ID(id))
+		query, err := query.CollectFields(ctx, "Like")
 		if err != nil {
 			return nil, err
 		}
@@ -205,6 +221,22 @@ func (c *Client) noders(ctx context.Context, table string, ids []int) ([]Noder, 
 		query := c.Hashtag.Query().
 			Where(hashtag.IDIn(ids...))
 		query, err := query.CollectFields(ctx, "Hashtag")
+		if err != nil {
+			return nil, err
+		}
+		nodes, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, node := range nodes {
+			for _, noder := range idmap[node.ID] {
+				*noder = node
+			}
+		}
+	case like.Table:
+		query := c.Like.Query().
+			Where(like.IDIn(ids...))
+		query, err := query.CollectFields(ctx, "Like")
 		if err != nil {
 			return nil, err
 		}

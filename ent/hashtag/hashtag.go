@@ -2,6 +2,10 @@
 
 package hashtag
 
+import (
+	"time"
+)
+
 const (
 	// Label holds the string label denoting the hashtag type in the database.
 	Label = "hashtag"
@@ -9,6 +13,8 @@ const (
 	FieldID = "id"
 	// FieldHashtag holds the string denoting the hashtag field in the database.
 	FieldHashtag = "hashtag"
+	// FieldCreatedAt holds the string denoting the created_at field in the database.
+	FieldCreatedAt = "created_at"
 	// EdgePosts holds the string denoting the posts edge name in mutations.
 	EdgePosts = "Posts"
 	// Table holds the table name of the hashtag in the database.
@@ -24,6 +30,7 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldHashtag,
+	FieldCreatedAt,
 }
 
 var (
@@ -41,3 +48,8 @@ func ValidColumn(column string) bool {
 	}
 	return false
 }
+
+var (
+	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
+	DefaultCreatedAt func() time.Time
+)

@@ -6,10 +6,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/hashtag"
+	"github.com/MangoSteen0903/go-blog-graphql/ent/like"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/post"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/user"
 )
@@ -33,16 +35,16 @@ func (pc *PostCreate) SetContext(s string) *PostCreate {
 	return pc
 }
 
-// SetLikes sets the "Likes" field.
-func (pc *PostCreate) SetLikes(i int) *PostCreate {
-	pc.mutation.SetLikes(i)
+// SetCreatedAt sets the "created_at" field.
+func (pc *PostCreate) SetCreatedAt(t time.Time) *PostCreate {
+	pc.mutation.SetCreatedAt(t)
 	return pc
 }
 
-// SetNillableLikes sets the "Likes" field if the given value is not nil.
-func (pc *PostCreate) SetNillableLikes(i *int) *PostCreate {
-	if i != nil {
-		pc.SetLikes(*i)
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (pc *PostCreate) SetNillableCreatedAt(t *time.Time) *PostCreate {
+	if t != nil {
+		pc.SetCreatedAt(*t)
 	}
 	return pc
 }
@@ -60,6 +62,21 @@ func (pc *PostCreate) AddHashtags(h ...*Hashtag) *PostCreate {
 		ids[i] = h[i].ID
 	}
 	return pc.AddHashtagIDs(ids...)
+}
+
+// AddLikeIDs adds the "Likes" edge to the Like entity by IDs.
+func (pc *PostCreate) AddLikeIDs(ids ...int) *PostCreate {
+	pc.mutation.AddLikeIDs(ids...)
+	return pc
+}
+
+// AddLikes adds the "Likes" edges to the Like entity.
+func (pc *PostCreate) AddLikes(l ...*Like) *PostCreate {
+	ids := make([]int, len(l))
+	for i := range l {
+		ids[i] = l[i].ID
+	}
+	return pc.AddLikeIDs(ids...)
 }
 
 // SetOwnerID sets the "owner" edge to the User entity by ID.
@@ -158,9 +175,9 @@ func (pc *PostCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (pc *PostCreate) defaults() {
-	if _, ok := pc.mutation.Likes(); !ok {
-		v := post.DefaultLikes
-		pc.mutation.SetLikes(v)
+	if _, ok := pc.mutation.CreatedAt(); !ok {
+		v := post.DefaultCreatedAt()
+		pc.mutation.SetCreatedAt(v)
 	}
 }
 
@@ -171,6 +188,9 @@ func (pc *PostCreate) check() error {
 	}
 	if _, ok := pc.mutation.Context(); !ok {
 		return &ValidationError{Name: "Context", err: errors.New(`ent: missing required field "Post.Context"`)}
+	}
+	if _, ok := pc.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Post.created_at"`)}
 	}
 	return nil
 }
@@ -207,9 +227,9 @@ func (pc *PostCreate) createSpec() (*Post, *sqlgraph.CreateSpec) {
 		_spec.SetField(post.FieldContext, field.TypeString, value)
 		_node.Context = value
 	}
-	if value, ok := pc.mutation.Likes(); ok {
-		_spec.SetField(post.FieldLikes, field.TypeInt, value)
-		_node.Likes = value
+	if value, ok := pc.mutation.CreatedAt(); ok {
+		_spec.SetField(post.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
 	}
 	if nodes := pc.mutation.HashtagsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -222,6 +242,25 @@ func (pc *PostCreate) createSpec() (*Post, *sqlgraph.CreateSpec) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: hashtag.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := pc.mutation.LikesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   post.LikesTable,
+			Columns: post.LikesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: like.FieldID,
 				},
 			},
 		}

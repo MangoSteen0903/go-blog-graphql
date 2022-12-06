@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/hashtag"
+	"github.com/MangoSteen0903/go-blog-graphql/ent/like"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/post"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/user"
 )
@@ -34,6 +35,7 @@ type OrderFunc func(*sql.Selector)
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
 		hashtag.Table: hashtag.ValidColumn,
+		like.Table:    like.ValidColumn,
 		post.Table:    post.ValidColumn,
 		user.Table:    user.ValidColumn,
 	}

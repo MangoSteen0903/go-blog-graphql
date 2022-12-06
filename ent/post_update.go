@@ -6,11 +6,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/hashtag"
+	"github.com/MangoSteen0903/go-blog-graphql/ent/like"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/post"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/predicate"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/user"
@@ -41,30 +43,17 @@ func (pu *PostUpdate) SetContext(s string) *PostUpdate {
 	return pu
 }
 
-// SetLikes sets the "Likes" field.
-func (pu *PostUpdate) SetLikes(i int) *PostUpdate {
-	pu.mutation.ResetLikes()
-	pu.mutation.SetLikes(i)
+// SetCreatedAt sets the "created_at" field.
+func (pu *PostUpdate) SetCreatedAt(t time.Time) *PostUpdate {
+	pu.mutation.SetCreatedAt(t)
 	return pu
 }
 
-// SetNillableLikes sets the "Likes" field if the given value is not nil.
-func (pu *PostUpdate) SetNillableLikes(i *int) *PostUpdate {
-	if i != nil {
-		pu.SetLikes(*i)
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (pu *PostUpdate) SetNillableCreatedAt(t *time.Time) *PostUpdate {
+	if t != nil {
+		pu.SetCreatedAt(*t)
 	}
-	return pu
-}
-
-// AddLikes adds i to the "Likes" field.
-func (pu *PostUpdate) AddLikes(i int) *PostUpdate {
-	pu.mutation.AddLikes(i)
-	return pu
-}
-
-// ClearLikes clears the value of the "Likes" field.
-func (pu *PostUpdate) ClearLikes() *PostUpdate {
-	pu.mutation.ClearLikes()
 	return pu
 }
 
@@ -81,6 +70,21 @@ func (pu *PostUpdate) AddHashtags(h ...*Hashtag) *PostUpdate {
 		ids[i] = h[i].ID
 	}
 	return pu.AddHashtagIDs(ids...)
+}
+
+// AddLikeIDs adds the "Likes" edge to the Like entity by IDs.
+func (pu *PostUpdate) AddLikeIDs(ids ...int) *PostUpdate {
+	pu.mutation.AddLikeIDs(ids...)
+	return pu
+}
+
+// AddLikes adds the "Likes" edges to the Like entity.
+func (pu *PostUpdate) AddLikes(l ...*Like) *PostUpdate {
+	ids := make([]int, len(l))
+	for i := range l {
+		ids[i] = l[i].ID
+	}
+	return pu.AddLikeIDs(ids...)
 }
 
 // SetOwnerID sets the "owner" edge to the User entity by ID.
@@ -126,6 +130,27 @@ func (pu *PostUpdate) RemoveHashtags(h ...*Hashtag) *PostUpdate {
 		ids[i] = h[i].ID
 	}
 	return pu.RemoveHashtagIDs(ids...)
+}
+
+// ClearLikes clears all "Likes" edges to the Like entity.
+func (pu *PostUpdate) ClearLikes() *PostUpdate {
+	pu.mutation.ClearLikes()
+	return pu
+}
+
+// RemoveLikeIDs removes the "Likes" edge to Like entities by IDs.
+func (pu *PostUpdate) RemoveLikeIDs(ids ...int) *PostUpdate {
+	pu.mutation.RemoveLikeIDs(ids...)
+	return pu
+}
+
+// RemoveLikes removes "Likes" edges to Like entities.
+func (pu *PostUpdate) RemoveLikes(l ...*Like) *PostUpdate {
+	ids := make([]int, len(l))
+	for i := range l {
+		ids[i] = l[i].ID
+	}
+	return pu.RemoveLikeIDs(ids...)
 }
 
 // ClearOwner clears the "owner" edge to the User entity.
@@ -212,14 +237,8 @@ func (pu *PostUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := pu.mutation.Context(); ok {
 		_spec.SetField(post.FieldContext, field.TypeString, value)
 	}
-	if value, ok := pu.mutation.Likes(); ok {
-		_spec.SetField(post.FieldLikes, field.TypeInt, value)
-	}
-	if value, ok := pu.mutation.AddedLikes(); ok {
-		_spec.AddField(post.FieldLikes, field.TypeInt, value)
-	}
-	if pu.mutation.LikesCleared() {
-		_spec.ClearField(post.FieldLikes, field.TypeInt)
+	if value, ok := pu.mutation.CreatedAt(); ok {
+		_spec.SetField(post.FieldCreatedAt, field.TypeTime, value)
 	}
 	if pu.mutation.HashtagsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -267,6 +286,60 @@ func (pu *PostUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: hashtag.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if pu.mutation.LikesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   post.LikesTable,
+			Columns: post.LikesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: like.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.RemovedLikesIDs(); len(nodes) > 0 && !pu.mutation.LikesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   post.LikesTable,
+			Columns: post.LikesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: like.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.LikesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   post.LikesTable,
+			Columns: post.LikesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: like.FieldID,
 				},
 			},
 		}
@@ -341,30 +414,17 @@ func (puo *PostUpdateOne) SetContext(s string) *PostUpdateOne {
 	return puo
 }
 
-// SetLikes sets the "Likes" field.
-func (puo *PostUpdateOne) SetLikes(i int) *PostUpdateOne {
-	puo.mutation.ResetLikes()
-	puo.mutation.SetLikes(i)
+// SetCreatedAt sets the "created_at" field.
+func (puo *PostUpdateOne) SetCreatedAt(t time.Time) *PostUpdateOne {
+	puo.mutation.SetCreatedAt(t)
 	return puo
 }
 
-// SetNillableLikes sets the "Likes" field if the given value is not nil.
-func (puo *PostUpdateOne) SetNillableLikes(i *int) *PostUpdateOne {
-	if i != nil {
-		puo.SetLikes(*i)
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (puo *PostUpdateOne) SetNillableCreatedAt(t *time.Time) *PostUpdateOne {
+	if t != nil {
+		puo.SetCreatedAt(*t)
 	}
-	return puo
-}
-
-// AddLikes adds i to the "Likes" field.
-func (puo *PostUpdateOne) AddLikes(i int) *PostUpdateOne {
-	puo.mutation.AddLikes(i)
-	return puo
-}
-
-// ClearLikes clears the value of the "Likes" field.
-func (puo *PostUpdateOne) ClearLikes() *PostUpdateOne {
-	puo.mutation.ClearLikes()
 	return puo
 }
 
@@ -381,6 +441,21 @@ func (puo *PostUpdateOne) AddHashtags(h ...*Hashtag) *PostUpdateOne {
 		ids[i] = h[i].ID
 	}
 	return puo.AddHashtagIDs(ids...)
+}
+
+// AddLikeIDs adds the "Likes" edge to the Like entity by IDs.
+func (puo *PostUpdateOne) AddLikeIDs(ids ...int) *PostUpdateOne {
+	puo.mutation.AddLikeIDs(ids...)
+	return puo
+}
+
+// AddLikes adds the "Likes" edges to the Like entity.
+func (puo *PostUpdateOne) AddLikes(l ...*Like) *PostUpdateOne {
+	ids := make([]int, len(l))
+	for i := range l {
+		ids[i] = l[i].ID
+	}
+	return puo.AddLikeIDs(ids...)
 }
 
 // SetOwnerID sets the "owner" edge to the User entity by ID.
@@ -426,6 +501,27 @@ func (puo *PostUpdateOne) RemoveHashtags(h ...*Hashtag) *PostUpdateOne {
 		ids[i] = h[i].ID
 	}
 	return puo.RemoveHashtagIDs(ids...)
+}
+
+// ClearLikes clears all "Likes" edges to the Like entity.
+func (puo *PostUpdateOne) ClearLikes() *PostUpdateOne {
+	puo.mutation.ClearLikes()
+	return puo
+}
+
+// RemoveLikeIDs removes the "Likes" edge to Like entities by IDs.
+func (puo *PostUpdateOne) RemoveLikeIDs(ids ...int) *PostUpdateOne {
+	puo.mutation.RemoveLikeIDs(ids...)
+	return puo
+}
+
+// RemoveLikes removes "Likes" edges to Like entities.
+func (puo *PostUpdateOne) RemoveLikes(l ...*Like) *PostUpdateOne {
+	ids := make([]int, len(l))
+	for i := range l {
+		ids[i] = l[i].ID
+	}
+	return puo.RemoveLikeIDs(ids...)
 }
 
 // ClearOwner clears the "owner" edge to the User entity.
@@ -542,14 +638,8 @@ func (puo *PostUpdateOne) sqlSave(ctx context.Context) (_node *Post, err error) 
 	if value, ok := puo.mutation.Context(); ok {
 		_spec.SetField(post.FieldContext, field.TypeString, value)
 	}
-	if value, ok := puo.mutation.Likes(); ok {
-		_spec.SetField(post.FieldLikes, field.TypeInt, value)
-	}
-	if value, ok := puo.mutation.AddedLikes(); ok {
-		_spec.AddField(post.FieldLikes, field.TypeInt, value)
-	}
-	if puo.mutation.LikesCleared() {
-		_spec.ClearField(post.FieldLikes, field.TypeInt)
+	if value, ok := puo.mutation.CreatedAt(); ok {
+		_spec.SetField(post.FieldCreatedAt, field.TypeTime, value)
 	}
 	if puo.mutation.HashtagsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -597,6 +687,60 @@ func (puo *PostUpdateOne) sqlSave(ctx context.Context) (_node *Post, err error) 
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: hashtag.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if puo.mutation.LikesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   post.LikesTable,
+			Columns: post.LikesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: like.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.RemovedLikesIDs(); len(nodes) > 0 && !puo.mutation.LikesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   post.LikesTable,
+			Columns: post.LikesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: like.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.LikesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   post.LikesTable,
+			Columns: post.LikesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: like.FieldID,
 				},
 			},
 		}

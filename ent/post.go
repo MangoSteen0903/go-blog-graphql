@@ -5,6 +5,7 @@ package ent
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/post"
@@ -20,8 +21,8 @@ type Post struct {
 	Title string `json:"Title,omitempty"`
 	// Context holds the value of the "Context" field.
 	Context string `json:"Context,omitempty"`
-	// Likes holds the value of the "Likes" field.
-	Likes int `json:"Likes,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the PostQuery when eager-loading is set.
 	Edges      PostEdges `json:"edges"`
@@ -32,15 +33,18 @@ type Post struct {
 type PostEdges struct {
 	// Hashtags holds the value of the hashtags edge.
 	Hashtags []*Hashtag `json:"hashtags,omitempty"`
+	// Likes holds the value of the Likes edge.
+	Likes []*Like `json:"Likes,omitempty"`
 	// Owner holds the value of the owner edge.
 	Owner *User `json:"owner,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 	// totalCount holds the count of the edges above.
-	totalCount [2]map[string]int
+	totalCount [3]map[string]int
 
 	namedHashtags map[string][]*Hashtag
+	namedLikes    map[string][]*Like
 }
 
 // HashtagsOrErr returns the Hashtags value or an error if the edge
@@ -52,10 +56,19 @@ func (e PostEdges) HashtagsOrErr() ([]*Hashtag, error) {
 	return nil, &NotLoadedError{edge: "hashtags"}
 }
 
+// LikesOrErr returns the Likes value or an error if the edge
+// was not loaded in eager-loading.
+func (e PostEdges) LikesOrErr() ([]*Like, error) {
+	if e.loadedTypes[1] {
+		return e.Likes, nil
+	}
+	return nil, &NotLoadedError{edge: "Likes"}
+}
+
 // OwnerOrErr returns the Owner value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e PostEdges) OwnerOrErr() (*User, error) {
-	if e.loadedTypes[1] {
+	if e.loadedTypes[2] {
 		if e.Owner == nil {
 			// Edge was loaded but was not found.
 			return nil, &NotFoundError{label: user.Label}
@@ -70,10 +83,12 @@ func (*Post) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case post.FieldID, post.FieldLikes:
+		case post.FieldID:
 			values[i] = new(sql.NullInt64)
 		case post.FieldTitle, post.FieldContext:
 			values[i] = new(sql.NullString)
+		case post.FieldCreatedAt:
+			values[i] = new(sql.NullTime)
 		case post.ForeignKeys[0]: // user_posts
 			values[i] = new(sql.NullInt64)
 		default:
@@ -109,11 +124,11 @@ func (po *Post) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				po.Context = value.String
 			}
-		case post.FieldLikes:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field Likes", values[i])
+		case post.FieldCreatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
-				po.Likes = int(value.Int64)
+				po.CreatedAt = value.Time
 			}
 		case post.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -130,6 +145,11 @@ func (po *Post) assignValues(columns []string, values []any) error {
 // QueryHashtags queries the "hashtags" edge of the Post entity.
 func (po *Post) QueryHashtags() *HashtagQuery {
 	return (&PostClient{config: po.config}).QueryHashtags(po)
+}
+
+// QueryLikes queries the "Likes" edge of the Post entity.
+func (po *Post) QueryLikes() *LikeQuery {
+	return (&PostClient{config: po.config}).QueryLikes(po)
 }
 
 // QueryOwner queries the "owner" edge of the Post entity.
@@ -166,8 +186,8 @@ func (po *Post) String() string {
 	builder.WriteString("Context=")
 	builder.WriteString(po.Context)
 	builder.WriteString(", ")
-	builder.WriteString("Likes=")
-	builder.WriteString(fmt.Sprintf("%v", po.Likes))
+	builder.WriteString("created_at=")
+	builder.WriteString(po.CreatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }
@@ -193,6 +213,30 @@ func (po *Post) appendNamedHashtags(name string, edges ...*Hashtag) {
 		po.Edges.namedHashtags[name] = []*Hashtag{}
 	} else {
 		po.Edges.namedHashtags[name] = append(po.Edges.namedHashtags[name], edges...)
+	}
+}
+
+// NamedLikes returns the Likes named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (po *Post) NamedLikes(name string) ([]*Like, error) {
+	if po.Edges.namedLikes == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := po.Edges.namedLikes[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (po *Post) appendNamedLikes(name string, edges ...*Like) {
+	if po.Edges.namedLikes == nil {
+		po.Edges.namedLikes = make(map[string][]*Like)
+	}
+	if len(edges) == 0 {
+		po.Edges.namedLikes[name] = []*Like{}
+	} else {
+		po.Edges.namedLikes[name] = append(po.Edges.namedLikes[name], edges...)
 	}
 }
 

@@ -5,6 +5,7 @@ package ent
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/hashtag"
@@ -17,6 +18,8 @@ type Hashtag struct {
 	ID int `json:"id,omitempty"`
 	// Hashtag holds the value of the "hashtag" field.
 	Hashtag string `json:"hashtag,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the HashtagQuery when eager-loading is set.
 	Edges HashtagEdges `json:"edges"`
@@ -53,6 +56,8 @@ func (*Hashtag) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case hashtag.FieldHashtag:
 			values[i] = new(sql.NullString)
+		case hashtag.FieldCreatedAt:
+			values[i] = new(sql.NullTime)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Hashtag", columns[i])
 		}
@@ -79,6 +84,12 @@ func (h *Hashtag) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field hashtag", values[i])
 			} else if value.Valid {
 				h.Hashtag = value.String
+			}
+		case hashtag.FieldCreatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
+			} else if value.Valid {
+				h.CreatedAt = value.Time
 			}
 		}
 	}
@@ -115,6 +126,9 @@ func (h *Hashtag) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", h.ID))
 	builder.WriteString("hashtag=")
 	builder.WriteString(h.Hashtag)
+	builder.WriteString(", ")
+	builder.WriteString("created_at=")
+	builder.WriteString(h.CreatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

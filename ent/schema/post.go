@@ -1,6 +1,8 @@
 package schema
 
 import (
+	"time"
+
 	"entgo.io/contrib/entgql"
 	"entgo.io/ent"
 	"entgo.io/ent/schema"
@@ -18,7 +20,7 @@ func (Post) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("Title"),
 		field.Text("Context"),
-		field.Int("Likes").Optional().Default(0),
+		field.Time("created_at").Default(time.Now),
 	}
 }
 
@@ -26,6 +28,7 @@ func (Post) Fields() []ent.Field {
 func (Post) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("hashtags", Hashtag.Type),
+		edge.To("Likes", Like.Type),
 		edge.From("owner", User.Type).Ref("Posts").Unique(),
 	}
 }

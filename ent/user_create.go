@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/MangoSteen0903/go-blog-graphql/ent/like"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/post"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/user"
 )
@@ -102,6 +103,21 @@ func (uc *UserCreate) AddPosts(p ...*Post) *UserCreate {
 		ids[i] = p[i].ID
 	}
 	return uc.AddPostIDs(ids...)
+}
+
+// AddLikeIDs adds the "Likes" edge to the Like entity by IDs.
+func (uc *UserCreate) AddLikeIDs(ids ...int) *UserCreate {
+	uc.mutation.AddLikeIDs(ids...)
+	return uc
+}
+
+// AddLikes adds the "Likes" edges to the Like entity.
+func (uc *UserCreate) AddLikes(l ...*Like) *UserCreate {
+	ids := make([]int, len(l))
+	for i := range l {
+		ids[i] = l[i].ID
+	}
+	return uc.AddLikeIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -271,6 +287,25 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: post.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.LikesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.LikesTable,
+			Columns: user.LikesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: like.FieldID,
 				},
 			},
 		}

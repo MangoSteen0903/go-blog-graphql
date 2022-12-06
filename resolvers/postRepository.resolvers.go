@@ -5,8 +5,10 @@ package resolvers
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/MangoSteen0903/go-blog-graphql/ent"
+	"github.com/MangoSteen0903/go-blog-graphql/ent/like"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/post"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/user"
 	"github.com/MangoSteen0903/go-blog-graphql/graph/generated"
@@ -16,7 +18,6 @@ import (
 
 // CreatePost is the resolver for the createPost field.
 func (r *mutationResolver) CreatePost(ctx context.Context, input ent.CreatePostInput, hashtags *string) (*model.DefaultResult, error) {
-
 	loggedInUser := utils.ForContext(ctx)
 	result := utils.CheckLogin(loggedInUser)
 
@@ -57,7 +58,6 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input ent.CreatePostI
 
 // UpdatePost is the resolver for the updatePost field.
 func (r *mutationResolver) UpdatePost(ctx context.Context, id int, input ent.UpdatePostInput, hashtags *string) (*model.DefaultResult, error) {
-
 	loggedInUser := utils.ForContext(ctx)
 
 	result := utils.CheckLogin(loggedInUser)
@@ -121,7 +121,6 @@ func (r *mutationResolver) UpdatePost(ctx context.Context, id int, input ent.Upd
 
 // DeletePost is the resolver for the deletePost field.
 func (r *mutationResolver) DeletePost(ctx context.Context, id int) (*model.DefaultResult, error) {
-
 	loggedInUser := utils.ForContext(ctx)
 
 	result := utils.CheckLogin(loggedInUser)
@@ -146,6 +145,49 @@ func (r *mutationResolver) DeletePost(ctx context.Context, id int) (*model.Defau
 		if err != nil {
 			result := utils.HandleErr("Cannot Delete Post. Please Try again.")
 			return &result, nil
+		}
+	}
+
+	return &model.DefaultResult{
+		Ok: true,
+	}, nil
+}
+
+// ToggleLike is the resolver for the toggleLike field.
+func (r *mutationResolver) ToggleLike(ctx context.Context, id int) (*model.DefaultResult, error) {
+	loggedInUser := utils.ForContext(ctx)
+
+	result := utils.CheckLogin(loggedInUser)
+
+	if result != nil {
+		return result, nil
+	}
+
+	newPost, err := r.client.Post.Query().Where(post.ID(id)).Only(ctx)
+
+	if err != nil {
+		errResult := utils.HandleErr("Cannot find Post.")
+		return &errResult, nil
+	}
+
+	_, err = newPost.QueryLikes().QueryOwner().Where(user.ID(loggedInUser.ID)).Only(ctx)
+
+	if err != nil {
+		like, err := r.client.Like.Create().AddPostIDs(newPost.ID).AddOwner(loggedInUser).Save(ctx)
+		fmt.Println(like)
+		if err != nil {
+			errResult := utils.HandleErr("Cannot create Like.")
+			return &errResult, nil
+		}
+	} else {
+		_, err := r.client.Like.Delete().Where(
+			like.HasOwnerWith(user.ID(loggedInUser.ID)),
+			like.HasPostsWith(post.ID(id)),
+		).Exec(ctx)
+
+		if err != nil {
+			errResult := utils.HandleErr("Cannot Toggle Like.")
+			return &errResult, nil
 		}
 	}
 

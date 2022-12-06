@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"time"
 
@@ -14,7 +15,10 @@ import (
 	"github.com/MangoSteen0903/go-blog-graphql/ent"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/user"
 	"github.com/MangoSteen0903/go-blog-graphql/graph/model"
+	"github.com/MangoSteen0903/go-blog-graphql/server/awsLoader"
 	"github.com/MangoSteen0903/go-blog-graphql/utils"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
 // CreateUser is the resolver for the createUser field.
@@ -34,8 +38,18 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input ent.CreateUserI
 		}
 
 		io.Copy(newFile, file.File)
+
 		defer newFile.Close()
 
+		client := awsLoader.LoadAWS()
+		_, err = client.PutObject(context.TODO(), &s3.PutObjectInput{
+			Bucket: aws.String("go-blog-bucket"),
+			Key:    aws.String(userFileName),
+			Body:   newFile,
+		})
+		if err != nil {
+			log.Println("Cannot Upload File.")
+		}
 		input.UploadImg = &userFileName
 	}
 	_, err := r.client.User.Create().

@@ -10,8 +10,9 @@ import (
 type CreatePostInput struct {
 	Title      string
 	Context    string
-	Likes      *int
+	CreatedAt  *time.Time
 	HashtagIDs []int
+	LikeIDs    []int
 	OwnerID    *int
 }
 
@@ -19,11 +20,14 @@ type CreatePostInput struct {
 func (i *CreatePostInput) Mutate(m *PostMutation) {
 	m.SetTitle(i.Title)
 	m.SetContext(i.Context)
-	if v := i.Likes; v != nil {
-		m.SetLikes(*v)
+	if v := i.CreatedAt; v != nil {
+		m.SetCreatedAt(*v)
 	}
 	if v := i.HashtagIDs; len(v) > 0 {
 		m.AddHashtagIDs(v...)
+	}
+	if v := i.LikeIDs; len(v) > 0 {
+		m.AddLikeIDs(v...)
 	}
 	if v := i.OwnerID; v != nil {
 		m.SetOwnerID(*v)
@@ -40,10 +44,11 @@ func (c *PostCreate) SetInput(i CreatePostInput) *PostCreate {
 type UpdatePostInput struct {
 	Title            *string
 	Context          *string
-	ClearLikes       bool
-	Likes            *int
+	CreatedAt        *time.Time
 	AddHashtagIDs    []int
 	RemoveHashtagIDs []int
+	AddLikeIDs       []int
+	RemoveLikeIDs    []int
 	ClearOwner       bool
 	OwnerID          *int
 }
@@ -56,17 +61,20 @@ func (i *UpdatePostInput) Mutate(m *PostMutation) {
 	if v := i.Context; v != nil {
 		m.SetContext(*v)
 	}
-	if i.ClearLikes {
-		m.ClearLikes()
-	}
-	if v := i.Likes; v != nil {
-		m.SetLikes(*v)
+	if v := i.CreatedAt; v != nil {
+		m.SetCreatedAt(*v)
 	}
 	if v := i.AddHashtagIDs; len(v) > 0 {
 		m.AddHashtagIDs(v...)
 	}
 	if v := i.RemoveHashtagIDs; len(v) > 0 {
 		m.RemoveHashtagIDs(v...)
+	}
+	if v := i.AddLikeIDs; len(v) > 0 {
+		m.AddLikeIDs(v...)
+	}
+	if v := i.RemoveLikeIDs; len(v) > 0 {
+		m.RemoveLikeIDs(v...)
 	}
 	if i.ClearOwner {
 		m.ClearOwner()
@@ -97,6 +105,7 @@ type CreateUserInput struct {
 	IsAdmin   *bool
 	CreatedAt *time.Time
 	PostIDs   []int
+	LikeIDs   []int
 }
 
 // Mutate applies the CreateUserInput on the UserMutation builder.
@@ -118,6 +127,9 @@ func (i *CreateUserInput) Mutate(m *UserMutation) {
 	if v := i.PostIDs; len(v) > 0 {
 		m.AddPostIDs(v...)
 	}
+	if v := i.LikeIDs; len(v) > 0 {
+		m.AddLikeIDs(v...)
+	}
 }
 
 // SetInput applies the change-set in the CreateUserInput on the UserCreate builder.
@@ -138,6 +150,8 @@ type UpdateUserInput struct {
 	CreatedAt      *time.Time
 	AddPostIDs     []int
 	RemovePostIDs  []int
+	AddLikeIDs     []int
+	RemoveLikeIDs  []int
 }
 
 // Mutate applies the UpdateUserInput on the UserMutation builder.
@@ -171,6 +185,12 @@ func (i *UpdateUserInput) Mutate(m *UserMutation) {
 	}
 	if v := i.RemovePostIDs; len(v) > 0 {
 		m.RemovePostIDs(v...)
+	}
+	if v := i.AddLikeIDs; len(v) > 0 {
+		m.AddLikeIDs(v...)
+	}
+	if v := i.RemoveLikeIDs; len(v) > 0 {
+		m.RemoveLikeIDs(v...)
 	}
 }
 

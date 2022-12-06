@@ -2,6 +2,10 @@
 
 package post
 
+import (
+	"time"
+)
+
 const (
 	// Label holds the string label denoting the post type in the database.
 	Label = "post"
@@ -11,10 +15,12 @@ const (
 	FieldTitle = "title"
 	// FieldContext holds the string denoting the context field in the database.
 	FieldContext = "context"
-	// FieldLikes holds the string denoting the likes field in the database.
-	FieldLikes = "likes"
+	// FieldCreatedAt holds the string denoting the created_at field in the database.
+	FieldCreatedAt = "created_at"
 	// EdgeHashtags holds the string denoting the hashtags edge name in mutations.
 	EdgeHashtags = "hashtags"
+	// EdgeLikes holds the string denoting the likes edge name in mutations.
+	EdgeLikes = "Likes"
 	// EdgeOwner holds the string denoting the owner edge name in mutations.
 	EdgeOwner = "owner"
 	// Table holds the table name of the post in the database.
@@ -24,6 +30,11 @@ const (
 	// HashtagsInverseTable is the table name for the Hashtag entity.
 	// It exists in this package in order to avoid circular dependency with the "hashtag" package.
 	HashtagsInverseTable = "hashtags"
+	// LikesTable is the table that holds the Likes relation/edge. The primary key declared below.
+	LikesTable = "post_Likes"
+	// LikesInverseTable is the table name for the Like entity.
+	// It exists in this package in order to avoid circular dependency with the "like" package.
+	LikesInverseTable = "likes"
 	// OwnerTable is the table that holds the owner relation/edge.
 	OwnerTable = "posts"
 	// OwnerInverseTable is the table name for the User entity.
@@ -38,7 +49,7 @@ var Columns = []string{
 	FieldID,
 	FieldTitle,
 	FieldContext,
-	FieldLikes,
+	FieldCreatedAt,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "posts"
@@ -51,6 +62,9 @@ var (
 	// HashtagsPrimaryKey and HashtagsColumn2 are the table columns denoting the
 	// primary key for the hashtags relation (M2M).
 	HashtagsPrimaryKey = []string{"post_id", "hashtag_id"}
+	// LikesPrimaryKey and LikesColumn2 are the table columns denoting the
+	// primary key for the Likes relation (M2M).
+	LikesPrimaryKey = []string{"post_id", "like_id"}
 )
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -69,6 +83,6 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// DefaultLikes holds the default value on creation for the "Likes" field.
-	DefaultLikes int
+	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
+	DefaultCreatedAt func() time.Time
 )

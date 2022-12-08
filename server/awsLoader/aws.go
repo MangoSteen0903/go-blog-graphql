@@ -2,9 +2,13 @@ package awsLoader
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
+	"time"
 
+	"github.com/99designs/gqlgen/graphql"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -21,7 +25,7 @@ func LoadAWS() *s3.Client {
 	}
 
 	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.Region = "ap-northeast-2"
+		o.Region = os.Getenv("S3_REGION")
 	})
 
 	return client
@@ -37,4 +41,24 @@ func LoadAWS() *s3.Client {
 
 		fmt.Println(buckets)
 	*/
+}
+
+func UploadFile(dirname string, username string, file *graphql.Upload) (*string, error) {
+
+	time := fmt.Sprintf("%v-%v-%v", time.Now().Year(), time.Now().Day(), time.Now().Hour())
+	userFileName := fmt.Sprintf("%v/%v-%v-%v.jpg", dirname, username, file.Filename, time)
+
+	client := LoadAWS()
+	_, err := client.PutObject(context.TODO(), &s3.PutObjectInput{
+		Bucket: aws.String(os.Getenv("BUCKET_NAME")),
+		Key:    aws.String(userFileName),
+		Body:   file.File,
+	})
+	if err != nil {
+		return nil, err
+	}
+	url := "https://%s.s3.%s.amazonaws.com/%s"
+	url = fmt.Sprintf(url, os.Getenv("BUCKET_NAME"), os.Getenv("S3_REGION"), userFileName)
+
+	return &url, nil
 }

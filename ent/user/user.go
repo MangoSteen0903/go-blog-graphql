@@ -27,6 +27,8 @@ const (
 	EdgePosts = "Posts"
 	// EdgeLikes holds the string denoting the likes edge name in mutations.
 	EdgeLikes = "Likes"
+	// EdgeComments holds the string denoting the comments edge name in mutations.
+	EdgeComments = "Comments"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// PostsTable is the table that holds the Posts relation/edge.
@@ -41,6 +43,11 @@ const (
 	// LikesInverseTable is the table name for the Like entity.
 	// It exists in this package in order to avoid circular dependency with the "like" package.
 	LikesInverseTable = "likes"
+	// CommentsTable is the table that holds the Comments relation/edge. The primary key declared below.
+	CommentsTable = "user_Comments"
+	// CommentsInverseTable is the table name for the Comment entity.
+	// It exists in this package in order to avoid circular dependency with the "comment" package.
+	CommentsInverseTable = "comments"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -58,6 +65,9 @@ var (
 	// LikesPrimaryKey and LikesColumn2 are the table columns denoting the
 	// primary key for the Likes relation (M2M).
 	LikesPrimaryKey = []string{"user_id", "like_id"}
+	// CommentsPrimaryKey and CommentsColumn2 are the table columns denoting the
+	// primary key for the Comments relation (M2M).
+	CommentsPrimaryKey = []string{"user_id", "comment_id"}
 )
 
 // ValidColumn reports if the column name is valid (part of the table columns).

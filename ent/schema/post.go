@@ -29,6 +29,7 @@ func (Post) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("hashtags", Hashtag.Type),
 		edge.To("Likes", Like.Type),
+		edge.To("Comments", Comment.Type),
 		edge.From("owner", User.Type).Ref("Posts").Unique(),
 	}
 }

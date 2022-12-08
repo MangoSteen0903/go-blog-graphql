@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/MangoSteen0903/go-blog-graphql/ent/comment"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/hashtag"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/like"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/post"
@@ -29,12 +30,14 @@ type PostQuery struct {
 	predicates        []predicate.Post
 	withHashtags      *HashtagQuery
 	withLikes         *LikeQuery
+	withComments      *CommentQuery
 	withOwner         *UserQuery
 	withFKs           bool
 	modifiers         []func(*sql.Selector)
 	loadTotal         []func(context.Context, []*Post) error
 	withNamedHashtags map[string]*HashtagQuery
 	withNamedLikes    map[string]*LikeQuery
+	withNamedComments map[string]*CommentQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -108,6 +111,28 @@ func (pq *PostQuery) QueryLikes() *LikeQuery {
 			sqlgraph.From(post.Table, post.FieldID, selector),
 			sqlgraph.To(like.Table, like.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, false, post.LikesTable, post.LikesPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryComments chains the current query on the "Comments" edge.
+func (pq *PostQuery) QueryComments() *CommentQuery {
+	query := &CommentQuery{config: pq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := pq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := pq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(post.Table, post.FieldID, selector),
+			sqlgraph.To(comment.Table, comment.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, post.CommentsTable, post.CommentsPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
 		return fromU, nil
@@ -320,6 +345,7 @@ func (pq *PostQuery) Clone() *PostQuery {
 		predicates:   append([]predicate.Post{}, pq.predicates...),
 		withHashtags: pq.withHashtags.Clone(),
 		withLikes:    pq.withLikes.Clone(),
+		withComments: pq.withComments.Clone(),
 		withOwner:    pq.withOwner.Clone(),
 		// clone intermediate query.
 		sql:    pq.sql.Clone(),
@@ -347,6 +373,17 @@ func (pq *PostQuery) WithLikes(opts ...func(*LikeQuery)) *PostQuery {
 		opt(query)
 	}
 	pq.withLikes = query
+	return pq
+}
+
+// WithComments tells the query-builder to eager-load the nodes that are connected to
+// the "Comments" edge. The optional arguments are used to configure the query builder of the edge.
+func (pq *PostQuery) WithComments(opts ...func(*CommentQuery)) *PostQuery {
+	query := &CommentQuery{config: pq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	pq.withComments = query
 	return pq
 }
 
@@ -435,9 +472,10 @@ func (pq *PostQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Post, e
 		nodes       = []*Post{}
 		withFKs     = pq.withFKs
 		_spec       = pq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			pq.withHashtags != nil,
 			pq.withLikes != nil,
+			pq.withComments != nil,
 			pq.withOwner != nil,
 		}
 	)
@@ -482,6 +520,13 @@ func (pq *PostQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Post, e
 			return nil, err
 		}
 	}
+	if query := pq.withComments; query != nil {
+		if err := pq.loadComments(ctx, query, nodes,
+			func(n *Post) { n.Edges.Comments = []*Comment{} },
+			func(n *Post, e *Comment) { n.Edges.Comments = append(n.Edges.Comments, e) }); err != nil {
+			return nil, err
+		}
+	}
 	if query := pq.withOwner; query != nil {
 		if err := pq.loadOwner(ctx, query, nodes, nil,
 			func(n *Post, e *User) { n.Edges.Owner = e }); err != nil {
@@ -499,6 +544,13 @@ func (pq *PostQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Post, e
 		if err := pq.loadLikes(ctx, query, nodes,
 			func(n *Post) { n.appendNamedLikes(name) },
 			func(n *Post, e *Like) { n.appendNamedLikes(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range pq.withNamedComments {
+		if err := pq.loadComments(ctx, query, nodes,
+			func(n *Post) { n.appendNamedComments(name) },
+			func(n *Post, e *Comment) { n.appendNamedComments(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -619,6 +671,64 @@ func (pq *PostQuery) loadLikes(ctx context.Context, query *LikeQuery, nodes []*P
 		nodes, ok := nids[n.ID]
 		if !ok {
 			return fmt.Errorf(`unexpected "Likes" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
+}
+func (pq *PostQuery) loadComments(ctx context.Context, query *CommentQuery, nodes []*Post, init func(*Post), assign func(*Post, *Comment)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*Post)
+	nids := make(map[int]map[*Post]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(post.CommentsTable)
+		s.Join(joinT).On(s.C(comment.FieldID), joinT.C(post.CommentsPrimaryKey[1]))
+		s.Where(sql.InValues(joinT.C(post.CommentsPrimaryKey[0]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(post.CommentsPrimaryKey[0]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	neighbors, err := query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+		assign := spec.Assign
+		values := spec.ScanValues
+		spec.ScanValues = func(columns []string) ([]any, error) {
+			values, err := values(columns[1:])
+			if err != nil {
+				return nil, err
+			}
+			return append([]any{new(sql.NullInt64)}, values...), nil
+		}
+		spec.Assign = func(columns []string, values []any) error {
+			outValue := int(values[0].(*sql.NullInt64).Int64)
+			inValue := int(values[1].(*sql.NullInt64).Int64)
+			if nids[inValue] == nil {
+				nids[inValue] = map[*Post]struct{}{byID[outValue]: {}}
+				return assign(columns[1:], values[1:])
+			}
+			nids[inValue][byID[outValue]] = struct{}{}
+			return nil
+		}
+	})
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "Comments" node returned %v`, n.ID)
 		}
 		for kn := range nodes {
 			assign(kn, n)
@@ -784,6 +894,20 @@ func (pq *PostQuery) WithNamedLikes(name string, opts ...func(*LikeQuery)) *Post
 		pq.withNamedLikes = make(map[string]*LikeQuery)
 	}
 	pq.withNamedLikes[name] = query
+	return pq
+}
+
+// WithNamedComments tells the query-builder to eager-load the nodes that are connected to the "Comments"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (pq *PostQuery) WithNamedComments(name string, opts ...func(*CommentQuery)) *PostQuery {
+	query := &CommentQuery{config: pq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	if pq.withNamedComments == nil {
+		pq.withNamedComments = make(map[string]*CommentQuery)
+	}
+	pq.withNamedComments[name] = query
 	return pq
 }
 

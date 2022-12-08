@@ -10,6 +10,89 @@ import (
 )
 
 // CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
+func (c *CommentQuery) CollectFields(ctx context.Context, satisfies ...string) (*CommentQuery, error) {
+	fc := graphql.GetFieldContext(ctx)
+	if fc == nil {
+		return c, nil
+	}
+	if err := c.collectField(ctx, graphql.GetOperationContext(ctx), fc.Field, nil, satisfies...); err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+func (c *CommentQuery) collectField(ctx context.Context, op *graphql.OperationContext, field graphql.CollectedField, path []string, satisfies ...string) error {
+	path = append([]string(nil), path...)
+	for _, field := range graphql.CollectFields(op, field.Selections, satisfies) {
+		switch field.Name {
+		case "owner":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = &UserQuery{config: c.config}
+			)
+			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
+				return err
+			}
+			c.WithNamedOwner(alias, func(wq *UserQuery) {
+				*wq = *query
+			})
+		case "post":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = &PostQuery{config: c.config}
+			)
+			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
+				return err
+			}
+			c.WithNamedPost(alias, func(wq *PostQuery) {
+				*wq = *query
+			})
+		case "likes":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = &LikeQuery{config: c.config}
+			)
+			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
+				return err
+			}
+			c.WithNamedLikes(alias, func(wq *LikeQuery) {
+				*wq = *query
+			})
+		}
+	}
+	return nil
+}
+
+type commentPaginateArgs struct {
+	first, last   *int
+	after, before *Cursor
+	opts          []CommentPaginateOption
+}
+
+func newCommentPaginateArgs(rv map[string]interface{}) *commentPaginateArgs {
+	args := &commentPaginateArgs{}
+	if rv == nil {
+		return args
+	}
+	if v := rv[firstField]; v != nil {
+		args.first = v.(*int)
+	}
+	if v := rv[lastField]; v != nil {
+		args.last = v.(*int)
+	}
+	if v := rv[afterField]; v != nil {
+		args.after = v.(*Cursor)
+	}
+	if v := rv[beforeField]; v != nil {
+		args.before = v.(*Cursor)
+	}
+	return args
+}
+
+// CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
 func (h *HashtagQuery) CollectFields(ctx context.Context, satisfies ...string) (*HashtagQuery, error) {
 	fc := graphql.GetFieldContext(ctx)
 	if fc == nil {
@@ -108,6 +191,18 @@ func (l *LikeQuery) collectField(ctx context.Context, op *graphql.OperationConte
 			l.WithNamedOwner(alias, func(wq *UserQuery) {
 				*wq = *query
 			})
+		case "comments":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = &CommentQuery{config: l.config}
+			)
+			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
+				return err
+			}
+			l.WithNamedComments(alias, func(wq *CommentQuery) {
+				*wq = *query
+			})
 		}
 	}
 	return nil
@@ -177,6 +272,18 @@ func (po *PostQuery) collectField(ctx context.Context, op *graphql.OperationCont
 				return err
 			}
 			po.WithNamedLikes(alias, func(wq *LikeQuery) {
+				*wq = *query
+			})
+		case "comments":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = &CommentQuery{config: po.config}
+			)
+			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
+				return err
+			}
+			po.WithNamedComments(alias, func(wq *CommentQuery) {
 				*wq = *query
 			})
 		case "owner":
@@ -258,6 +365,18 @@ func (u *UserQuery) collectField(ctx context.Context, op *graphql.OperationConte
 				return err
 			}
 			u.WithNamedLikes(alias, func(wq *LikeQuery) {
+				*wq = *query
+			})
+		case "comments":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = &CommentQuery{config: u.config}
+			)
+			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
+				return err
+			}
+			u.WithNamedComments(alias, func(wq *CommentQuery) {
 				*wq = *query
 			})
 		}

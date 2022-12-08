@@ -35,16 +35,19 @@ type PostEdges struct {
 	Hashtags []*Hashtag `json:"hashtags,omitempty"`
 	// Likes holds the value of the Likes edge.
 	Likes []*Like `json:"Likes,omitempty"`
+	// Comments holds the value of the Comments edge.
+	Comments []*Comment `json:"Comments,omitempty"`
 	// Owner holds the value of the owner edge.
 	Owner *User `json:"owner,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 	// totalCount holds the count of the edges above.
-	totalCount [3]map[string]int
+	totalCount [4]map[string]int
 
 	namedHashtags map[string][]*Hashtag
 	namedLikes    map[string][]*Like
+	namedComments map[string][]*Comment
 }
 
 // HashtagsOrErr returns the Hashtags value or an error if the edge
@@ -65,10 +68,19 @@ func (e PostEdges) LikesOrErr() ([]*Like, error) {
 	return nil, &NotLoadedError{edge: "Likes"}
 }
 
+// CommentsOrErr returns the Comments value or an error if the edge
+// was not loaded in eager-loading.
+func (e PostEdges) CommentsOrErr() ([]*Comment, error) {
+	if e.loadedTypes[2] {
+		return e.Comments, nil
+	}
+	return nil, &NotLoadedError{edge: "Comments"}
+}
+
 // OwnerOrErr returns the Owner value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e PostEdges) OwnerOrErr() (*User, error) {
-	if e.loadedTypes[2] {
+	if e.loadedTypes[3] {
 		if e.Owner == nil {
 			// Edge was loaded but was not found.
 			return nil, &NotFoundError{label: user.Label}
@@ -150,6 +162,11 @@ func (po *Post) QueryHashtags() *HashtagQuery {
 // QueryLikes queries the "Likes" edge of the Post entity.
 func (po *Post) QueryLikes() *LikeQuery {
 	return (&PostClient{config: po.config}).QueryLikes(po)
+}
+
+// QueryComments queries the "Comments" edge of the Post entity.
+func (po *Post) QueryComments() *CommentQuery {
+	return (&PostClient{config: po.config}).QueryComments(po)
 }
 
 // QueryOwner queries the "owner" edge of the Post entity.
@@ -237,6 +254,30 @@ func (po *Post) appendNamedLikes(name string, edges ...*Like) {
 		po.Edges.namedLikes[name] = []*Like{}
 	} else {
 		po.Edges.namedLikes[name] = append(po.Edges.namedLikes[name], edges...)
+	}
+}
+
+// NamedComments returns the Comments named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (po *Post) NamedComments(name string) ([]*Comment, error) {
+	if po.Edges.namedComments == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := po.Edges.namedComments[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (po *Post) appendNamedComments(name string, edges ...*Comment) {
+	if po.Edges.namedComments == nil {
+		po.Edges.namedComments = make(map[string][]*Comment)
+	}
+	if len(edges) == 0 {
+		po.Edges.namedComments[name] = []*Comment{}
+	} else {
+		po.Edges.namedComments[name] = append(po.Edges.namedComments[name], edges...)
 	}
 }
 

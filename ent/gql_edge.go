@@ -8,6 +8,42 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 )
 
+func (c *Comment) Owner(ctx context.Context) (result []*User, err error) {
+	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
+		result, err = c.NamedOwner(graphql.GetFieldContext(ctx).Field.Alias)
+	} else {
+		result, err = c.Edges.OwnerOrErr()
+	}
+	if IsNotLoaded(err) {
+		result, err = c.QueryOwner().All(ctx)
+	}
+	return result, err
+}
+
+func (c *Comment) Post(ctx context.Context) (result []*Post, err error) {
+	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
+		result, err = c.NamedPost(graphql.GetFieldContext(ctx).Field.Alias)
+	} else {
+		result, err = c.Edges.PostOrErr()
+	}
+	if IsNotLoaded(err) {
+		result, err = c.QueryPost().All(ctx)
+	}
+	return result, err
+}
+
+func (c *Comment) Likes(ctx context.Context) (result []*Like, err error) {
+	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
+		result, err = c.NamedLikes(graphql.GetFieldContext(ctx).Field.Alias)
+	} else {
+		result, err = c.Edges.LikesOrErr()
+	}
+	if IsNotLoaded(err) {
+		result, err = c.QueryLikes().All(ctx)
+	}
+	return result, err
+}
+
 func (h *Hashtag) Posts(ctx context.Context) (result []*Post, err error) {
 	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
 		result, err = h.NamedPosts(graphql.GetFieldContext(ctx).Field.Alias)
@@ -44,6 +80,18 @@ func (l *Like) Owner(ctx context.Context) (result []*User, err error) {
 	return result, err
 }
 
+func (l *Like) Comments(ctx context.Context) (result []*Comment, err error) {
+	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
+		result, err = l.NamedComments(graphql.GetFieldContext(ctx).Field.Alias)
+	} else {
+		result, err = l.Edges.CommentsOrErr()
+	}
+	if IsNotLoaded(err) {
+		result, err = l.QueryComments().All(ctx)
+	}
+	return result, err
+}
+
 func (po *Post) Hashtags(ctx context.Context) (result []*Hashtag, err error) {
 	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
 		result, err = po.NamedHashtags(graphql.GetFieldContext(ctx).Field.Alias)
@@ -64,6 +112,18 @@ func (po *Post) Likes(ctx context.Context) (result []*Like, err error) {
 	}
 	if IsNotLoaded(err) {
 		result, err = po.QueryLikes().All(ctx)
+	}
+	return result, err
+}
+
+func (po *Post) Comments(ctx context.Context) (result []*Comment, err error) {
+	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
+		result, err = po.NamedComments(graphql.GetFieldContext(ctx).Field.Alias)
+	} else {
+		result, err = po.Edges.CommentsOrErr()
+	}
+	if IsNotLoaded(err) {
+		result, err = po.QueryComments().All(ctx)
 	}
 	return result, err
 }
@@ -96,6 +156,18 @@ func (u *User) Likes(ctx context.Context) (result []*Like, err error) {
 	}
 	if IsNotLoaded(err) {
 		result, err = u.QueryLikes().All(ctx)
+	}
+	return result, err
+}
+
+func (u *User) Comments(ctx context.Context) (result []*Comment, err error) {
+	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
+		result, err = u.NamedComments(graphql.GetFieldContext(ctx).Field.Alias)
+	} else {
+		result, err = u.Edges.CommentsOrErr()
+	}
+	if IsNotLoaded(err) {
+		result, err = u.QueryComments().All(ctx)
 	}
 	return result, err
 }

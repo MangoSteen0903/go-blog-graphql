@@ -25,5 +25,6 @@ func (Like) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("Posts", Post.Type).Ref("Likes"),
 		edge.From("owner", User.Type).Ref("Likes"),
+		edge.From("comments", Comment.Type).Ref("Likes"),
 	}
 }

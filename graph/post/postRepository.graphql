@@ -1,3 +1,7 @@
+extend type Post {
+  likeNum: Int!
+}
+
 extend type Mutation {
   createPost(input: CreatePostInput!, hashtags: String): DefaultResult!
   updatePost(

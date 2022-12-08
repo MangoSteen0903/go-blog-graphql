@@ -29,14 +29,17 @@ type LikeEdges struct {
 	Posts []*Post `json:"Posts,omitempty"`
 	// Owner holds the value of the owner edge.
 	Owner []*User `json:"owner,omitempty"`
+	// Comments holds the value of the comments edge.
+	Comments []*Comment `json:"comments,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 	// totalCount holds the count of the edges above.
-	totalCount [2]map[string]int
+	totalCount [3]map[string]int
 
-	namedPosts map[string][]*Post
-	namedOwner map[string][]*User
+	namedPosts    map[string][]*Post
+	namedOwner    map[string][]*User
+	namedComments map[string][]*Comment
 }
 
 // PostsOrErr returns the Posts value or an error if the edge
@@ -55,6 +58,15 @@ func (e LikeEdges) OwnerOrErr() ([]*User, error) {
 		return e.Owner, nil
 	}
 	return nil, &NotLoadedError{edge: "owner"}
+}
+
+// CommentsOrErr returns the Comments value or an error if the edge
+// was not loaded in eager-loading.
+func (e LikeEdges) CommentsOrErr() ([]*Comment, error) {
+	if e.loadedTypes[2] {
+		return e.Comments, nil
+	}
+	return nil, &NotLoadedError{edge: "comments"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -106,6 +118,11 @@ func (l *Like) QueryPosts() *PostQuery {
 // QueryOwner queries the "owner" edge of the Like entity.
 func (l *Like) QueryOwner() *UserQuery {
 	return (&LikeClient{config: l.config}).QueryOwner(l)
+}
+
+// QueryComments queries the "comments" edge of the Like entity.
+func (l *Like) QueryComments() *CommentQuery {
+	return (&LikeClient{config: l.config}).QueryComments(l)
 }
 
 // Update returns a builder for updating this Like.
@@ -182,6 +199,30 @@ func (l *Like) appendNamedOwner(name string, edges ...*User) {
 		l.Edges.namedOwner[name] = []*User{}
 	} else {
 		l.Edges.namedOwner[name] = append(l.Edges.namedOwner[name], edges...)
+	}
+}
+
+// NamedComments returns the Comments named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (l *Like) NamedComments(name string) ([]*Comment, error) {
+	if l.Edges.namedComments == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := l.Edges.namedComments[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (l *Like) appendNamedComments(name string, edges ...*Comment) {
+	if l.Edges.namedComments == nil {
+		l.Edges.namedComments = make(map[string][]*Comment)
+	}
+	if len(edges) == 0 {
+		l.Edges.namedComments[name] = []*Comment{}
+	} else {
+		l.Edges.namedComments[name] = append(l.Edges.namedComments[name], edges...)
 	}
 }
 

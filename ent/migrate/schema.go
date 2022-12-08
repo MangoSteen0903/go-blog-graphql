@@ -8,6 +8,18 @@ import (
 )
 
 var (
+	// CommentsColumns holds the columns for the "comments" table.
+	CommentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "context", Type: field.TypeString},
+		{Name: "created_at", Type: field.TypeTime},
+	}
+	// CommentsTable holds the schema information for the "comments" table.
+	CommentsTable = &schema.Table{
+		Name:       "comments",
+		Columns:    CommentsColumns,
+		PrimaryKey: []*schema.Column{CommentsColumns[0]},
+	}
 	// HashtagsColumns holds the columns for the "hashtags" table.
 	HashtagsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -69,6 +81,31 @@ var (
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
 	}
+	// CommentLikesColumns holds the columns for the "comment_Likes" table.
+	CommentLikesColumns = []*schema.Column{
+		{Name: "comment_id", Type: field.TypeInt},
+		{Name: "like_id", Type: field.TypeInt},
+	}
+	// CommentLikesTable holds the schema information for the "comment_Likes" table.
+	CommentLikesTable = &schema.Table{
+		Name:       "comment_Likes",
+		Columns:    CommentLikesColumns,
+		PrimaryKey: []*schema.Column{CommentLikesColumns[0], CommentLikesColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "comment_Likes_comment_id",
+				Columns:    []*schema.Column{CommentLikesColumns[0]},
+				RefColumns: []*schema.Column{CommentsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "comment_Likes_like_id",
+				Columns:    []*schema.Column{CommentLikesColumns[1]},
+				RefColumns: []*schema.Column{LikesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// PostHashtagsColumns holds the columns for the "post_hashtags" table.
 	PostHashtagsColumns = []*schema.Column{
 		{Name: "post_id", Type: field.TypeInt},
@@ -119,6 +156,31 @@ var (
 			},
 		},
 	}
+	// PostCommentsColumns holds the columns for the "post_Comments" table.
+	PostCommentsColumns = []*schema.Column{
+		{Name: "post_id", Type: field.TypeInt},
+		{Name: "comment_id", Type: field.TypeInt},
+	}
+	// PostCommentsTable holds the schema information for the "post_Comments" table.
+	PostCommentsTable = &schema.Table{
+		Name:       "post_Comments",
+		Columns:    PostCommentsColumns,
+		PrimaryKey: []*schema.Column{PostCommentsColumns[0], PostCommentsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "post_Comments_post_id",
+				Columns:    []*schema.Column{PostCommentsColumns[0]},
+				RefColumns: []*schema.Column{PostsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "post_Comments_comment_id",
+				Columns:    []*schema.Column{PostCommentsColumns[1]},
+				RefColumns: []*schema.Column{CommentsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// UserLikesColumns holds the columns for the "user_Likes" table.
 	UserLikesColumns = []*schema.Column{
 		{Name: "user_id", Type: field.TypeInt},
@@ -144,24 +206,59 @@ var (
 			},
 		},
 	}
+	// UserCommentsColumns holds the columns for the "user_Comments" table.
+	UserCommentsColumns = []*schema.Column{
+		{Name: "user_id", Type: field.TypeInt},
+		{Name: "comment_id", Type: field.TypeInt},
+	}
+	// UserCommentsTable holds the schema information for the "user_Comments" table.
+	UserCommentsTable = &schema.Table{
+		Name:       "user_Comments",
+		Columns:    UserCommentsColumns,
+		PrimaryKey: []*schema.Column{UserCommentsColumns[0], UserCommentsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "user_Comments_user_id",
+				Columns:    []*schema.Column{UserCommentsColumns[0]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "user_Comments_comment_id",
+				Columns:    []*schema.Column{UserCommentsColumns[1]},
+				RefColumns: []*schema.Column{CommentsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		CommentsTable,
 		HashtagsTable,
 		LikesTable,
 		PostsTable,
 		UsersTable,
+		CommentLikesTable,
 		PostHashtagsTable,
 		PostLikesTable,
+		PostCommentsTable,
 		UserLikesTable,
+		UserCommentsTable,
 	}
 )
 
 func init() {
 	PostsTable.ForeignKeys[0].RefTable = UsersTable
+	CommentLikesTable.ForeignKeys[0].RefTable = CommentsTable
+	CommentLikesTable.ForeignKeys[1].RefTable = LikesTable
 	PostHashtagsTable.ForeignKeys[0].RefTable = PostsTable
 	PostHashtagsTable.ForeignKeys[1].RefTable = HashtagsTable
 	PostLikesTable.ForeignKeys[0].RefTable = PostsTable
 	PostLikesTable.ForeignKeys[1].RefTable = LikesTable
+	PostCommentsTable.ForeignKeys[0].RefTable = PostsTable
+	PostCommentsTable.ForeignKeys[1].RefTable = CommentsTable
 	UserLikesTable.ForeignKeys[0].RefTable = UsersTable
 	UserLikesTable.ForeignKeys[1].RefTable = LikesTable
+	UserCommentsTable.ForeignKeys[0].RefTable = UsersTable
+	UserCommentsTable.ForeignKeys[1].RefTable = CommentsTable
 }

@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/MangoSteen0903/go-blog-graphql/ent/comment"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/like"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/post"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/predicate"
@@ -74,6 +75,21 @@ func (lu *LikeUpdate) AddOwner(u ...*User) *LikeUpdate {
 	return lu.AddOwnerIDs(ids...)
 }
 
+// AddCommentIDs adds the "comments" edge to the Comment entity by IDs.
+func (lu *LikeUpdate) AddCommentIDs(ids ...int) *LikeUpdate {
+	lu.mutation.AddCommentIDs(ids...)
+	return lu
+}
+
+// AddComments adds the "comments" edges to the Comment entity.
+func (lu *LikeUpdate) AddComments(c ...*Comment) *LikeUpdate {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return lu.AddCommentIDs(ids...)
+}
+
 // Mutation returns the LikeMutation object of the builder.
 func (lu *LikeUpdate) Mutation() *LikeMutation {
 	return lu.mutation
@@ -119,6 +135,27 @@ func (lu *LikeUpdate) RemoveOwner(u ...*User) *LikeUpdate {
 		ids[i] = u[i].ID
 	}
 	return lu.RemoveOwnerIDs(ids...)
+}
+
+// ClearComments clears all "comments" edges to the Comment entity.
+func (lu *LikeUpdate) ClearComments() *LikeUpdate {
+	lu.mutation.ClearComments()
+	return lu
+}
+
+// RemoveCommentIDs removes the "comments" edge to Comment entities by IDs.
+func (lu *LikeUpdate) RemoveCommentIDs(ids ...int) *LikeUpdate {
+	lu.mutation.RemoveCommentIDs(ids...)
+	return lu
+}
+
+// RemoveComments removes "comments" edges to Comment entities.
+func (lu *LikeUpdate) RemoveComments(c ...*Comment) *LikeUpdate {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return lu.RemoveCommentIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -304,6 +341,60 @@ func (lu *LikeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if lu.mutation.CommentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   like.CommentsTable,
+			Columns: like.CommentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: comment.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := lu.mutation.RemovedCommentsIDs(); len(nodes) > 0 && !lu.mutation.CommentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   like.CommentsTable,
+			Columns: like.CommentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: comment.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := lu.mutation.CommentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   like.CommentsTable,
+			Columns: like.CommentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: comment.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, lu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{like.Label}
@@ -367,6 +458,21 @@ func (luo *LikeUpdateOne) AddOwner(u ...*User) *LikeUpdateOne {
 	return luo.AddOwnerIDs(ids...)
 }
 
+// AddCommentIDs adds the "comments" edge to the Comment entity by IDs.
+func (luo *LikeUpdateOne) AddCommentIDs(ids ...int) *LikeUpdateOne {
+	luo.mutation.AddCommentIDs(ids...)
+	return luo
+}
+
+// AddComments adds the "comments" edges to the Comment entity.
+func (luo *LikeUpdateOne) AddComments(c ...*Comment) *LikeUpdateOne {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return luo.AddCommentIDs(ids...)
+}
+
 // Mutation returns the LikeMutation object of the builder.
 func (luo *LikeUpdateOne) Mutation() *LikeMutation {
 	return luo.mutation
@@ -412,6 +518,27 @@ func (luo *LikeUpdateOne) RemoveOwner(u ...*User) *LikeUpdateOne {
 		ids[i] = u[i].ID
 	}
 	return luo.RemoveOwnerIDs(ids...)
+}
+
+// ClearComments clears all "comments" edges to the Comment entity.
+func (luo *LikeUpdateOne) ClearComments() *LikeUpdateOne {
+	luo.mutation.ClearComments()
+	return luo
+}
+
+// RemoveCommentIDs removes the "comments" edge to Comment entities by IDs.
+func (luo *LikeUpdateOne) RemoveCommentIDs(ids ...int) *LikeUpdateOne {
+	luo.mutation.RemoveCommentIDs(ids...)
+	return luo
+}
+
+// RemoveComments removes "comments" edges to Comment entities.
+func (luo *LikeUpdateOne) RemoveComments(c ...*Comment) *LikeUpdateOne {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return luo.RemoveCommentIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -619,6 +746,60 @@ func (luo *LikeUpdateOne) sqlSave(ctx context.Context) (_node *Like, err error) 
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if luo.mutation.CommentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   like.CommentsTable,
+			Columns: like.CommentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: comment.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := luo.mutation.RemovedCommentsIDs(); len(nodes) > 0 && !luo.mutation.CommentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   like.CommentsTable,
+			Columns: like.CommentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: comment.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := luo.mutation.CommentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   like.CommentsTable,
+			Columns: like.CommentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: comment.FieldID,
 				},
 			},
 		}

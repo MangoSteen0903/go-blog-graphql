@@ -6,6 +6,90 @@ import (
 	"time"
 )
 
+// CreateCommentInput represents a mutation input for creating comments.
+type CreateCommentInput struct {
+	Context   string
+	CreatedAt *time.Time
+	OwnerIDs  []int
+	PostIDs   []int
+	LikeIDs   []int
+}
+
+// Mutate applies the CreateCommentInput on the CommentMutation builder.
+func (i *CreateCommentInput) Mutate(m *CommentMutation) {
+	m.SetContext(i.Context)
+	if v := i.CreatedAt; v != nil {
+		m.SetCreatedAt(*v)
+	}
+	if v := i.OwnerIDs; len(v) > 0 {
+		m.AddOwnerIDs(v...)
+	}
+	if v := i.PostIDs; len(v) > 0 {
+		m.AddPostIDs(v...)
+	}
+	if v := i.LikeIDs; len(v) > 0 {
+		m.AddLikeIDs(v...)
+	}
+}
+
+// SetInput applies the change-set in the CreateCommentInput on the CommentCreate builder.
+func (c *CommentCreate) SetInput(i CreateCommentInput) *CommentCreate {
+	i.Mutate(c.Mutation())
+	return c
+}
+
+// UpdateCommentInput represents a mutation input for updating comments.
+type UpdateCommentInput struct {
+	Context        *string
+	CreatedAt      *time.Time
+	AddOwnerIDs    []int
+	RemoveOwnerIDs []int
+	AddPostIDs     []int
+	RemovePostIDs  []int
+	AddLikeIDs     []int
+	RemoveLikeIDs  []int
+}
+
+// Mutate applies the UpdateCommentInput on the CommentMutation builder.
+func (i *UpdateCommentInput) Mutate(m *CommentMutation) {
+	if v := i.Context; v != nil {
+		m.SetContext(*v)
+	}
+	if v := i.CreatedAt; v != nil {
+		m.SetCreatedAt(*v)
+	}
+	if v := i.AddOwnerIDs; len(v) > 0 {
+		m.AddOwnerIDs(v...)
+	}
+	if v := i.RemoveOwnerIDs; len(v) > 0 {
+		m.RemoveOwnerIDs(v...)
+	}
+	if v := i.AddPostIDs; len(v) > 0 {
+		m.AddPostIDs(v...)
+	}
+	if v := i.RemovePostIDs; len(v) > 0 {
+		m.RemovePostIDs(v...)
+	}
+	if v := i.AddLikeIDs; len(v) > 0 {
+		m.AddLikeIDs(v...)
+	}
+	if v := i.RemoveLikeIDs; len(v) > 0 {
+		m.RemoveLikeIDs(v...)
+	}
+}
+
+// SetInput applies the change-set in the UpdateCommentInput on the CommentUpdate builder.
+func (c *CommentUpdate) SetInput(i UpdateCommentInput) *CommentUpdate {
+	i.Mutate(c.Mutation())
+	return c
+}
+
+// SetInput applies the change-set in the UpdateCommentInput on the CommentUpdateOne builder.
+func (c *CommentUpdateOne) SetInput(i UpdateCommentInput) *CommentUpdateOne {
+	i.Mutate(c.Mutation())
+	return c
+}
+
 // CreatePostInput represents a mutation input for creating posts.
 type CreatePostInput struct {
 	Title      string
@@ -13,6 +97,7 @@ type CreatePostInput struct {
 	CreatedAt  *time.Time
 	HashtagIDs []int
 	LikeIDs    []int
+	CommentIDs []int
 	OwnerID    *int
 }
 
@@ -28,6 +113,9 @@ func (i *CreatePostInput) Mutate(m *PostMutation) {
 	}
 	if v := i.LikeIDs; len(v) > 0 {
 		m.AddLikeIDs(v...)
+	}
+	if v := i.CommentIDs; len(v) > 0 {
+		m.AddCommentIDs(v...)
 	}
 	if v := i.OwnerID; v != nil {
 		m.SetOwnerID(*v)
@@ -49,6 +137,8 @@ type UpdatePostInput struct {
 	RemoveHashtagIDs []int
 	AddLikeIDs       []int
 	RemoveLikeIDs    []int
+	AddCommentIDs    []int
+	RemoveCommentIDs []int
 	ClearOwner       bool
 	OwnerID          *int
 }
@@ -76,6 +166,12 @@ func (i *UpdatePostInput) Mutate(m *PostMutation) {
 	if v := i.RemoveLikeIDs; len(v) > 0 {
 		m.RemoveLikeIDs(v...)
 	}
+	if v := i.AddCommentIDs; len(v) > 0 {
+		m.AddCommentIDs(v...)
+	}
+	if v := i.RemoveCommentIDs; len(v) > 0 {
+		m.RemoveCommentIDs(v...)
+	}
 	if i.ClearOwner {
 		m.ClearOwner()
 	}
@@ -98,14 +194,15 @@ func (c *PostUpdateOne) SetInput(i UpdatePostInput) *PostUpdateOne {
 
 // CreateUserInput represents a mutation input for creating users.
 type CreateUserInput struct {
-	Username  string
-	Password  string
-	Location  *string
-	UploadImg *string
-	IsAdmin   *bool
-	CreatedAt *time.Time
-	PostIDs   []int
-	LikeIDs   []int
+	Username   string
+	Password   string
+	Location   *string
+	UploadImg  *string
+	IsAdmin    *bool
+	CreatedAt  *time.Time
+	PostIDs    []int
+	LikeIDs    []int
+	CommentIDs []int
 }
 
 // Mutate applies the CreateUserInput on the UserMutation builder.
@@ -130,6 +227,9 @@ func (i *CreateUserInput) Mutate(m *UserMutation) {
 	if v := i.LikeIDs; len(v) > 0 {
 		m.AddLikeIDs(v...)
 	}
+	if v := i.CommentIDs; len(v) > 0 {
+		m.AddCommentIDs(v...)
+	}
 }
 
 // SetInput applies the change-set in the CreateUserInput on the UserCreate builder.
@@ -140,18 +240,20 @@ func (c *UserCreate) SetInput(i CreateUserInput) *UserCreate {
 
 // UpdateUserInput represents a mutation input for updating users.
 type UpdateUserInput struct {
-	Username       *string
-	Password       *string
-	ClearLocation  bool
-	Location       *string
-	ClearUploadImg bool
-	UploadImg      *string
-	IsAdmin        *bool
-	CreatedAt      *time.Time
-	AddPostIDs     []int
-	RemovePostIDs  []int
-	AddLikeIDs     []int
-	RemoveLikeIDs  []int
+	Username         *string
+	Password         *string
+	ClearLocation    bool
+	Location         *string
+	ClearUploadImg   bool
+	UploadImg        *string
+	IsAdmin          *bool
+	CreatedAt        *time.Time
+	AddPostIDs       []int
+	RemovePostIDs    []int
+	AddLikeIDs       []int
+	RemoveLikeIDs    []int
+	AddCommentIDs    []int
+	RemoveCommentIDs []int
 }
 
 // Mutate applies the UpdateUserInput on the UserMutation builder.
@@ -191,6 +293,12 @@ func (i *UpdateUserInput) Mutate(m *UserMutation) {
 	}
 	if v := i.RemoveLikeIDs; len(v) > 0 {
 		m.RemoveLikeIDs(v...)
+	}
+	if v := i.AddCommentIDs; len(v) > 0 {
+		m.AddCommentIDs(v...)
+	}
+	if v := i.RemoveCommentIDs; len(v) > 0 {
+		m.RemoveCommentIDs(v...)
 	}
 }
 

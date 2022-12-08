@@ -39,14 +39,17 @@ type UserEdges struct {
 	Posts []*Post `json:"Posts,omitempty"`
 	// Likes holds the value of the Likes edge.
 	Likes []*Like `json:"Likes,omitempty"`
+	// Comments holds the value of the Comments edge.
+	Comments []*Comment `json:"Comments,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 	// totalCount holds the count of the edges above.
-	totalCount [2]map[string]int
+	totalCount [3]map[string]int
 
-	namedPosts map[string][]*Post
-	namedLikes map[string][]*Like
+	namedPosts    map[string][]*Post
+	namedLikes    map[string][]*Like
+	namedComments map[string][]*Comment
 }
 
 // PostsOrErr returns the Posts value or an error if the edge
@@ -65,6 +68,15 @@ func (e UserEdges) LikesOrErr() ([]*Like, error) {
 		return e.Likes, nil
 	}
 	return nil, &NotLoadedError{edge: "Likes"}
+}
+
+// CommentsOrErr returns the Comments value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) CommentsOrErr() ([]*Comment, error) {
+	if e.loadedTypes[2] {
+		return e.Comments, nil
+	}
+	return nil, &NotLoadedError{edge: "Comments"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -150,6 +162,11 @@ func (u *User) QueryPosts() *PostQuery {
 // QueryLikes queries the "Likes" edge of the User entity.
 func (u *User) QueryLikes() *LikeQuery {
 	return (&UserClient{config: u.config}).QueryLikes(u)
+}
+
+// QueryComments queries the "Comments" edge of the User entity.
+func (u *User) QueryComments() *CommentQuery {
+	return (&UserClient{config: u.config}).QueryComments(u)
 }
 
 // Update returns a builder for updating this User.
@@ -241,6 +258,30 @@ func (u *User) appendNamedLikes(name string, edges ...*Like) {
 		u.Edges.namedLikes[name] = []*Like{}
 	} else {
 		u.Edges.namedLikes[name] = append(u.Edges.namedLikes[name], edges...)
+	}
+}
+
+// NamedComments returns the Comments named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (u *User) NamedComments(name string) ([]*Comment, error) {
+	if u.Edges.namedComments == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := u.Edges.namedComments[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (u *User) appendNamedComments(name string, edges ...*Comment) {
+	if u.Edges.namedComments == nil {
+		u.Edges.namedComments = make(map[string][]*Comment)
+	}
+	if len(edges) == 0 {
+		u.Edges.namedComments[name] = []*Comment{}
+	} else {
+		u.Edges.namedComments[name] = append(u.Edges.namedComments[name], edges...)
 	}
 }
 

@@ -1,0 +1,10 @@
+extend type Mutation {
+  postComment(postId: Int!, input: CreateCommentInput!): DefaultResult!
+  editComment(id: Int!, input: UpdateCommentInput!): DefaultResult!
+  deleteComment(id: Int!): DefaultResult!
+  toggleCommentLike(id: Int!): DefaultResult!
+}
+
+extend type Comment {
+  likeNum: Int!
+}

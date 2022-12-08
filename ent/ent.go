@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/MangoSteen0903/go-blog-graphql/ent/comment"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/hashtag"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/like"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/post"
@@ -34,6 +35,7 @@ type OrderFunc func(*sql.Selector)
 // columnChecker returns a function indicates if the column exists in the given column.
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
+		comment.Table: comment.ValidColumn,
 		hashtag.Table: hashtag.ValidColumn,
 		like.Table:    like.ValidColumn,
 		post.Table:    post.ValidColumn,

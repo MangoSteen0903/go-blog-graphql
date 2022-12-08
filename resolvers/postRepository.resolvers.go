@@ -5,13 +5,11 @@ package resolvers
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/MangoSteen0903/go-blog-graphql/ent"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/like"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/post"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/user"
-	"github.com/MangoSteen0903/go-blog-graphql/graph/generated"
 	"github.com/MangoSteen0903/go-blog-graphql/graph/model"
 	"github.com/MangoSteen0903/go-blog-graphql/utils"
 )
@@ -163,18 +161,17 @@ func (r *mutationResolver) ToggleLike(ctx context.Context, id int) (*model.Defau
 		return result, nil
 	}
 
-	newPost, err := r.client.Post.Query().Where(post.ID(id)).Only(ctx)
+	retrievedPost, err := r.client.Post.Query().Where(post.ID(id)).Only(ctx)
 
 	if err != nil {
 		errResult := utils.HandleErr("Cannot find Post.")
 		return &errResult, nil
 	}
 
-	_, err = newPost.QueryLikes().QueryOwner().Where(user.ID(loggedInUser.ID)).Only(ctx)
+	_, err = retrievedPost.QueryLikes().QueryOwner().Where(user.ID(loggedInUser.ID)).Only(ctx)
 
 	if err != nil {
-		like, err := r.client.Like.Create().AddPostIDs(newPost.ID).AddOwner(loggedInUser).Save(ctx)
-		fmt.Println(like)
+		_, err := r.client.Like.Create().AddPostIDs(retrievedPost.ID).AddOwner(loggedInUser).Save(ctx)
 		if err != nil {
 			errResult := utils.HandleErr("Cannot create Like.")
 			return &errResult, nil
@@ -194,6 +191,15 @@ func (r *mutationResolver) ToggleLike(ctx context.Context, id int) (*model.Defau
 	return &model.DefaultResult{
 		Ok: true,
 	}, nil
+}
+
+// LikeNum is the resolver for the likeNum field.
+func (r *postResolver) LikeNum(ctx context.Context, obj *ent.Post) (int, error) {
+	likesNum, err := obj.QueryLikes().Count(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return likesNum, nil
 }
 
 // SeePost is the resolver for the seePost field.
@@ -236,8 +242,3 @@ func (r *queryResolver) SeeUserPost(ctx context.Context, userID int) (*model.Pos
 		Posts: posts,
 	}, nil
 }
-
-// Mutation returns generated.MutationResolver implementation.
-func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
-
-type mutationResolver struct{ *Resolver }

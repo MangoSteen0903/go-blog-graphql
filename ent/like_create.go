@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/MangoSteen0903/go-blog-graphql/ent/comment"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/like"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/post"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/user"
@@ -64,6 +65,21 @@ func (lc *LikeCreate) AddOwner(u ...*User) *LikeCreate {
 		ids[i] = u[i].ID
 	}
 	return lc.AddOwnerIDs(ids...)
+}
+
+// AddCommentIDs adds the "comments" edge to the Comment entity by IDs.
+func (lc *LikeCreate) AddCommentIDs(ids ...int) *LikeCreate {
+	lc.mutation.AddCommentIDs(ids...)
+	return lc
+}
+
+// AddComments adds the "comments" edges to the Comment entity.
+func (lc *LikeCreate) AddComments(c ...*Comment) *LikeCreate {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return lc.AddCommentIDs(ids...)
 }
 
 // Mutation returns the LikeMutation object of the builder.
@@ -215,6 +231,25 @@ func (lc *LikeCreate) createSpec() (*Like, *sqlgraph.CreateSpec) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := lc.mutation.CommentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   like.CommentsTable,
+			Columns: like.CommentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: comment.FieldID,
 				},
 			},
 		}

@@ -17,6 +17,8 @@ const (
 	EdgePosts = "Posts"
 	// EdgeOwner holds the string denoting the owner edge name in mutations.
 	EdgeOwner = "owner"
+	// EdgeComments holds the string denoting the comments edge name in mutations.
+	EdgeComments = "comments"
 	// Table holds the table name of the like in the database.
 	Table = "likes"
 	// PostsTable is the table that holds the Posts relation/edge. The primary key declared below.
@@ -29,6 +31,11 @@ const (
 	// OwnerInverseTable is the table name for the User entity.
 	// It exists in this package in order to avoid circular dependency with the "user" package.
 	OwnerInverseTable = "users"
+	// CommentsTable is the table that holds the comments relation/edge. The primary key declared below.
+	CommentsTable = "comment_Likes"
+	// CommentsInverseTable is the table name for the Comment entity.
+	// It exists in this package in order to avoid circular dependency with the "comment" package.
+	CommentsInverseTable = "comments"
 )
 
 // Columns holds all SQL columns for like fields.
@@ -44,6 +51,9 @@ var (
 	// OwnerPrimaryKey and OwnerColumn2 are the table columns denoting the
 	// primary key for the owner relation (M2M).
 	OwnerPrimaryKey = []string{"user_id", "like_id"}
+	// CommentsPrimaryKey and CommentsColumn2 are the table columns denoting the
+	// primary key for the comments relation (M2M).
+	CommentsPrimaryKey = []string{"comment_id", "like_id"}
 )
 
 // ValidColumn reports if the column name is valid (part of the table columns).

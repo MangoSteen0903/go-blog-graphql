@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/MangoSteen0903/go-blog-graphql/ent/comment"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/like"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/post"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/predicate"
@@ -20,18 +21,20 @@ import (
 // LikeQuery is the builder for querying Like entities.
 type LikeQuery struct {
 	config
-	limit          *int
-	offset         *int
-	unique         *bool
-	order          []OrderFunc
-	fields         []string
-	predicates     []predicate.Like
-	withPosts      *PostQuery
-	withOwner      *UserQuery
-	modifiers      []func(*sql.Selector)
-	loadTotal      []func(context.Context, []*Like) error
-	withNamedPosts map[string]*PostQuery
-	withNamedOwner map[string]*UserQuery
+	limit             *int
+	offset            *int
+	unique            *bool
+	order             []OrderFunc
+	fields            []string
+	predicates        []predicate.Like
+	withPosts         *PostQuery
+	withOwner         *UserQuery
+	withComments      *CommentQuery
+	modifiers         []func(*sql.Selector)
+	loadTotal         []func(context.Context, []*Like) error
+	withNamedPosts    map[string]*PostQuery
+	withNamedOwner    map[string]*UserQuery
+	withNamedComments map[string]*CommentQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -105,6 +108,28 @@ func (lq *LikeQuery) QueryOwner() *UserQuery {
 			sqlgraph.From(like.Table, like.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, true, like.OwnerTable, like.OwnerPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(lq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryComments chains the current query on the "comments" edge.
+func (lq *LikeQuery) QueryComments() *CommentQuery {
+	query := &CommentQuery{config: lq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := lq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := lq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(like.Table, like.FieldID, selector),
+			sqlgraph.To(comment.Table, comment.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, like.CommentsTable, like.CommentsPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(lq.driver.Dialect(), step)
 		return fromU, nil
@@ -288,13 +313,14 @@ func (lq *LikeQuery) Clone() *LikeQuery {
 		return nil
 	}
 	return &LikeQuery{
-		config:     lq.config,
-		limit:      lq.limit,
-		offset:     lq.offset,
-		order:      append([]OrderFunc{}, lq.order...),
-		predicates: append([]predicate.Like{}, lq.predicates...),
-		withPosts:  lq.withPosts.Clone(),
-		withOwner:  lq.withOwner.Clone(),
+		config:       lq.config,
+		limit:        lq.limit,
+		offset:       lq.offset,
+		order:        append([]OrderFunc{}, lq.order...),
+		predicates:   append([]predicate.Like{}, lq.predicates...),
+		withPosts:    lq.withPosts.Clone(),
+		withOwner:    lq.withOwner.Clone(),
+		withComments: lq.withComments.Clone(),
 		// clone intermediate query.
 		sql:    lq.sql.Clone(),
 		path:   lq.path,
@@ -321,6 +347,17 @@ func (lq *LikeQuery) WithOwner(opts ...func(*UserQuery)) *LikeQuery {
 		opt(query)
 	}
 	lq.withOwner = query
+	return lq
+}
+
+// WithComments tells the query-builder to eager-load the nodes that are connected to
+// the "comments" edge. The optional arguments are used to configure the query builder of the edge.
+func (lq *LikeQuery) WithComments(opts ...func(*CommentQuery)) *LikeQuery {
+	query := &CommentQuery{config: lq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	lq.withComments = query
 	return lq
 }
 
@@ -397,9 +434,10 @@ func (lq *LikeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Like, e
 	var (
 		nodes       = []*Like{}
 		_spec       = lq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			lq.withPosts != nil,
 			lq.withOwner != nil,
+			lq.withComments != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -437,6 +475,13 @@ func (lq *LikeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Like, e
 			return nil, err
 		}
 	}
+	if query := lq.withComments; query != nil {
+		if err := lq.loadComments(ctx, query, nodes,
+			func(n *Like) { n.Edges.Comments = []*Comment{} },
+			func(n *Like, e *Comment) { n.Edges.Comments = append(n.Edges.Comments, e) }); err != nil {
+			return nil, err
+		}
+	}
 	for name, query := range lq.withNamedPosts {
 		if err := lq.loadPosts(ctx, query, nodes,
 			func(n *Like) { n.appendNamedPosts(name) },
@@ -448,6 +493,13 @@ func (lq *LikeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Like, e
 		if err := lq.loadOwner(ctx, query, nodes,
 			func(n *Like) { n.appendNamedOwner(name) },
 			func(n *Like, e *User) { n.appendNamedOwner(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range lq.withNamedComments {
+		if err := lq.loadComments(ctx, query, nodes,
+			func(n *Like) { n.appendNamedComments(name) },
+			func(n *Like, e *Comment) { n.appendNamedComments(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -568,6 +620,64 @@ func (lq *LikeQuery) loadOwner(ctx context.Context, query *UserQuery, nodes []*L
 		nodes, ok := nids[n.ID]
 		if !ok {
 			return fmt.Errorf(`unexpected "owner" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
+}
+func (lq *LikeQuery) loadComments(ctx context.Context, query *CommentQuery, nodes []*Like, init func(*Like), assign func(*Like, *Comment)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*Like)
+	nids := make(map[int]map[*Like]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(like.CommentsTable)
+		s.Join(joinT).On(s.C(comment.FieldID), joinT.C(like.CommentsPrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(like.CommentsPrimaryKey[1]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(like.CommentsPrimaryKey[1]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	neighbors, err := query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+		assign := spec.Assign
+		values := spec.ScanValues
+		spec.ScanValues = func(columns []string) ([]any, error) {
+			values, err := values(columns[1:])
+			if err != nil {
+				return nil, err
+			}
+			return append([]any{new(sql.NullInt64)}, values...), nil
+		}
+		spec.Assign = func(columns []string, values []any) error {
+			outValue := int(values[0].(*sql.NullInt64).Int64)
+			inValue := int(values[1].(*sql.NullInt64).Int64)
+			if nids[inValue] == nil {
+				nids[inValue] = map[*Like]struct{}{byID[outValue]: {}}
+				return assign(columns[1:], values[1:])
+			}
+			nids[inValue][byID[outValue]] = struct{}{}
+			return nil
+		}
+	})
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "comments" node returned %v`, n.ID)
 		}
 		for kn := range nodes {
 			assign(kn, n)
@@ -704,6 +814,20 @@ func (lq *LikeQuery) WithNamedOwner(name string, opts ...func(*UserQuery)) *Like
 		lq.withNamedOwner = make(map[string]*UserQuery)
 	}
 	lq.withNamedOwner[name] = query
+	return lq
+}
+
+// WithNamedComments tells the query-builder to eager-load the nodes that are connected to the "comments"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (lq *LikeQuery) WithNamedComments(name string, opts ...func(*CommentQuery)) *LikeQuery {
+	query := &CommentQuery{config: lq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	if lq.withNamedComments == nil {
+		lq.withNamedComments = make(map[string]*CommentQuery)
+	}
+	lq.withNamedComments[name] = query
 	return lq
 }
 

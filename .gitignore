@@ -25,3 +25,5 @@ go.sum
 
 tmp
 .DS_Store
+
+./cors-anywhere

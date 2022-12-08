@@ -14,6 +14,7 @@ import (
 	"github.com/MangoSteen0903/go-blog-graphql/resolvers"
 	"github.com/MangoSteen0903/go-blog-graphql/server/middleware"
 	"github.com/MangoSteen0903/go-blog-graphql/utils"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -45,10 +46,10 @@ func main() {
 	}
 
 	r := gin.Default()
-
+	r.Use(cors.Default())
 	r.Use(middleware.AuthMiddleware(client))
 
-	r.GET("/", playgroundHandler())
+	r.GET("", playgroundHandler())
 	r.POST("/query", graphqlHandler(client))
 
 	if err := r.Run(portUrl); err != nil {

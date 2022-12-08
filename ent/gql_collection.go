@@ -4,9 +4,14 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
+	"fmt"
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/MangoSteen0903/go-blog-graphql/ent/comment"
+	"github.com/MangoSteen0903/go-blog-graphql/ent/post"
+	"github.com/MangoSteen0903/go-blog-graphql/ent/user"
 )
 
 // CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
@@ -43,8 +48,83 @@ func (c *CommentQuery) collectField(ctx context.Context, op *graphql.OperationCo
 				path  = append(path, alias)
 				query = &PostQuery{config: c.config}
 			)
-			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
+			args := newPostPaginateArgs(fieldArgs(ctx, nil, path...))
+			if err := validateFirstLast(args.first, args.last); err != nil {
+				return fmt.Errorf("validate first and last in path %q: %w", path, err)
+			}
+			pager, err := newPostPager(args.opts)
+			if err != nil {
+				return fmt.Errorf("create new pager in path %q: %w", path, err)
+			}
+			if query, err = pager.applyFilter(query); err != nil {
 				return err
+			}
+			ignoredEdges := !hasCollectedField(ctx, append(path, edgesField)...)
+			if hasCollectedField(ctx, append(path, totalCountField)...) || hasCollectedField(ctx, append(path, pageInfoField)...) {
+				hasPagination := args.after != nil || args.first != nil || args.before != nil || args.last != nil
+				if hasPagination || ignoredEdges {
+					query := query.Clone()
+					c.loadTotal = append(c.loadTotal, func(ctx context.Context, nodes []*Comment) error {
+						ids := make([]driver.Value, len(nodes))
+						for i := range nodes {
+							ids[i] = nodes[i].ID
+						}
+						var v []struct {
+							NodeID int `sql:"comment_id"`
+							Count  int `sql:"count"`
+						}
+						query.Where(func(s *sql.Selector) {
+							joinT := sql.Table(comment.PostTable)
+							s.Join(joinT).On(s.C(post.FieldID), joinT.C(comment.PostPrimaryKey[0]))
+							s.Where(sql.InValues(joinT.C(comment.PostPrimaryKey[1]), ids...))
+							s.Select(joinT.C(comment.PostPrimaryKey[1]), sql.Count("*"))
+							s.GroupBy(joinT.C(comment.PostPrimaryKey[1]))
+						})
+						if err := query.Select().Scan(ctx, &v); err != nil {
+							return err
+						}
+						m := make(map[int]int, len(v))
+						for i := range v {
+							m[v[i].NodeID] = v[i].Count
+						}
+						for i := range nodes {
+							n := m[nodes[i].ID]
+							if nodes[i].Edges.totalCount[1] == nil {
+								nodes[i].Edges.totalCount[1] = make(map[string]int)
+							}
+							nodes[i].Edges.totalCount[1][alias] = n
+						}
+						return nil
+					})
+				} else {
+					c.loadTotal = append(c.loadTotal, func(_ context.Context, nodes []*Comment) error {
+						for i := range nodes {
+							n := len(nodes[i].Edges.Post)
+							if nodes[i].Edges.totalCount[1] == nil {
+								nodes[i].Edges.totalCount[1] = make(map[string]int)
+							}
+							nodes[i].Edges.totalCount[1][alias] = n
+						}
+						return nil
+					})
+				}
+			}
+			if ignoredEdges || (args.first != nil && *args.first == 0) || (args.last != nil && *args.last == 0) {
+				continue
+			}
+
+			query = pager.applyCursors(query, args.after, args.before)
+			if limit := paginateLimit(args.first, args.last); limit > 0 {
+				modify := limitRows(comment.PostPrimaryKey[1], limit, pager.orderExpr(args.last != nil))
+				query.modifiers = append(query.modifiers, modify)
+			} else {
+				query = pager.applyOrder(query, args.last != nil)
+			}
+			path = append(path, edgesField, nodeField)
+			if field := collectedField(ctx, path...); field != nil {
+				if err := query.collectField(ctx, op, *field, path, satisfies...); err != nil {
+					return err
+				}
 			}
 			c.WithNamedPost(alias, func(wq *PostQuery) {
 				*wq = *query
@@ -88,6 +168,28 @@ func newCommentPaginateArgs(rv map[string]interface{}) *commentPaginateArgs {
 	}
 	if v := rv[beforeField]; v != nil {
 		args.before = v.(*Cursor)
+	}
+	if v, ok := rv[orderByField]; ok {
+		switch v := v.(type) {
+		case map[string]interface{}:
+			var (
+				err1, err2 error
+				order      = &CommentOrder{Field: &CommentOrderField{}}
+			)
+			if d, ok := v[directionField]; ok {
+				err1 = order.Direction.UnmarshalGQL(d)
+			}
+			if f, ok := v[fieldField]; ok {
+				err2 = order.Field.UnmarshalGQL(f)
+			}
+			if err1 == nil && err2 == nil {
+				args.opts = append(args.opts, WithCommentOrder(order))
+			}
+		case *CommentOrder:
+			if v != nil {
+				args.opts = append(args.opts, WithCommentOrder(v))
+			}
+		}
 	}
 	return args
 }
@@ -280,8 +382,83 @@ func (po *PostQuery) collectField(ctx context.Context, op *graphql.OperationCont
 				path  = append(path, alias)
 				query = &CommentQuery{config: po.config}
 			)
-			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
+			args := newCommentPaginateArgs(fieldArgs(ctx, nil, path...))
+			if err := validateFirstLast(args.first, args.last); err != nil {
+				return fmt.Errorf("validate first and last in path %q: %w", path, err)
+			}
+			pager, err := newCommentPager(args.opts)
+			if err != nil {
+				return fmt.Errorf("create new pager in path %q: %w", path, err)
+			}
+			if query, err = pager.applyFilter(query); err != nil {
 				return err
+			}
+			ignoredEdges := !hasCollectedField(ctx, append(path, edgesField)...)
+			if hasCollectedField(ctx, append(path, totalCountField)...) || hasCollectedField(ctx, append(path, pageInfoField)...) {
+				hasPagination := args.after != nil || args.first != nil || args.before != nil || args.last != nil
+				if hasPagination || ignoredEdges {
+					query := query.Clone()
+					po.loadTotal = append(po.loadTotal, func(ctx context.Context, nodes []*Post) error {
+						ids := make([]driver.Value, len(nodes))
+						for i := range nodes {
+							ids[i] = nodes[i].ID
+						}
+						var v []struct {
+							NodeID int `sql:"post_id"`
+							Count  int `sql:"count"`
+						}
+						query.Where(func(s *sql.Selector) {
+							joinT := sql.Table(post.CommentsTable)
+							s.Join(joinT).On(s.C(comment.FieldID), joinT.C(post.CommentsPrimaryKey[1]))
+							s.Where(sql.InValues(joinT.C(post.CommentsPrimaryKey[0]), ids...))
+							s.Select(joinT.C(post.CommentsPrimaryKey[0]), sql.Count("*"))
+							s.GroupBy(joinT.C(post.CommentsPrimaryKey[0]))
+						})
+						if err := query.Select().Scan(ctx, &v); err != nil {
+							return err
+						}
+						m := make(map[int]int, len(v))
+						for i := range v {
+							m[v[i].NodeID] = v[i].Count
+						}
+						for i := range nodes {
+							n := m[nodes[i].ID]
+							if nodes[i].Edges.totalCount[2] == nil {
+								nodes[i].Edges.totalCount[2] = make(map[string]int)
+							}
+							nodes[i].Edges.totalCount[2][alias] = n
+						}
+						return nil
+					})
+				} else {
+					po.loadTotal = append(po.loadTotal, func(_ context.Context, nodes []*Post) error {
+						for i := range nodes {
+							n := len(nodes[i].Edges.Comments)
+							if nodes[i].Edges.totalCount[2] == nil {
+								nodes[i].Edges.totalCount[2] = make(map[string]int)
+							}
+							nodes[i].Edges.totalCount[2][alias] = n
+						}
+						return nil
+					})
+				}
+			}
+			if ignoredEdges || (args.first != nil && *args.first == 0) || (args.last != nil && *args.last == 0) {
+				continue
+			}
+
+			query = pager.applyCursors(query, args.after, args.before)
+			if limit := paginateLimit(args.first, args.last); limit > 0 {
+				modify := limitRows(post.CommentsPrimaryKey[0], limit, pager.orderExpr(args.last != nil))
+				query.modifiers = append(query.modifiers, modify)
+			} else {
+				query = pager.applyOrder(query, args.last != nil)
+			}
+			path = append(path, edgesField, nodeField)
+			if field := collectedField(ctx, path...); field != nil {
+				if err := query.collectField(ctx, op, *field, path, satisfies...); err != nil {
+					return err
+				}
 			}
 			po.WithNamedComments(alias, func(wq *CommentQuery) {
 				*wq = *query
@@ -324,6 +501,28 @@ func newPostPaginateArgs(rv map[string]interface{}) *postPaginateArgs {
 	if v := rv[beforeField]; v != nil {
 		args.before = v.(*Cursor)
 	}
+	if v, ok := rv[orderByField]; ok {
+		switch v := v.(type) {
+		case map[string]interface{}:
+			var (
+				err1, err2 error
+				order      = &PostOrder{Field: &PostOrderField{}}
+			)
+			if d, ok := v[directionField]; ok {
+				err1 = order.Direction.UnmarshalGQL(d)
+			}
+			if f, ok := v[fieldField]; ok {
+				err2 = order.Field.UnmarshalGQL(f)
+			}
+			if err1 == nil && err2 == nil {
+				args.opts = append(args.opts, WithPostOrder(order))
+			}
+		case *PostOrder:
+			if v != nil {
+				args.opts = append(args.opts, WithPostOrder(v))
+			}
+		}
+	}
 	return args
 }
 
@@ -349,8 +548,79 @@ func (u *UserQuery) collectField(ctx context.Context, op *graphql.OperationConte
 				path  = append(path, alias)
 				query = &PostQuery{config: u.config}
 			)
-			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
+			args := newPostPaginateArgs(fieldArgs(ctx, nil, path...))
+			if err := validateFirstLast(args.first, args.last); err != nil {
+				return fmt.Errorf("validate first and last in path %q: %w", path, err)
+			}
+			pager, err := newPostPager(args.opts)
+			if err != nil {
+				return fmt.Errorf("create new pager in path %q: %w", path, err)
+			}
+			if query, err = pager.applyFilter(query); err != nil {
 				return err
+			}
+			ignoredEdges := !hasCollectedField(ctx, append(path, edgesField)...)
+			if hasCollectedField(ctx, append(path, totalCountField)...) || hasCollectedField(ctx, append(path, pageInfoField)...) {
+				hasPagination := args.after != nil || args.first != nil || args.before != nil || args.last != nil
+				if hasPagination || ignoredEdges {
+					query := query.Clone()
+					u.loadTotal = append(u.loadTotal, func(ctx context.Context, nodes []*User) error {
+						ids := make([]driver.Value, len(nodes))
+						for i := range nodes {
+							ids[i] = nodes[i].ID
+						}
+						var v []struct {
+							NodeID int `sql:"user_posts"`
+							Count  int `sql:"count"`
+						}
+						query.Where(func(s *sql.Selector) {
+							s.Where(sql.InValues(user.PostsColumn, ids...))
+						})
+						if err := query.GroupBy(user.PostsColumn).Aggregate(Count()).Scan(ctx, &v); err != nil {
+							return err
+						}
+						m := make(map[int]int, len(v))
+						for i := range v {
+							m[v[i].NodeID] = v[i].Count
+						}
+						for i := range nodes {
+							n := m[nodes[i].ID]
+							if nodes[i].Edges.totalCount[0] == nil {
+								nodes[i].Edges.totalCount[0] = make(map[string]int)
+							}
+							nodes[i].Edges.totalCount[0][alias] = n
+						}
+						return nil
+					})
+				} else {
+					u.loadTotal = append(u.loadTotal, func(_ context.Context, nodes []*User) error {
+						for i := range nodes {
+							n := len(nodes[i].Edges.Posts)
+							if nodes[i].Edges.totalCount[0] == nil {
+								nodes[i].Edges.totalCount[0] = make(map[string]int)
+							}
+							nodes[i].Edges.totalCount[0][alias] = n
+						}
+						return nil
+					})
+				}
+			}
+			if ignoredEdges || (args.first != nil && *args.first == 0) || (args.last != nil && *args.last == 0) {
+				continue
+			}
+
+			query = pager.applyCursors(query, args.after, args.before)
+			if limit := paginateLimit(args.first, args.last); limit > 0 {
+				modify := limitRows(user.PostsColumn, limit, pager.orderExpr(args.last != nil))
+				query.modifiers = append(query.modifiers, modify)
+			} else {
+				query = pager.applyOrder(query, args.last != nil)
+			}
+			path = append(path, edgesField, nodeField)
+			if field := collectedField(ctx, path...); field != nil {
+				if err := query.collectField(ctx, op, *field, path, satisfies...); err != nil {
+					return err
+				}
 			}
 			u.WithNamedPosts(alias, func(wq *PostQuery) {
 				*wq = *query
@@ -373,8 +643,83 @@ func (u *UserQuery) collectField(ctx context.Context, op *graphql.OperationConte
 				path  = append(path, alias)
 				query = &CommentQuery{config: u.config}
 			)
-			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
+			args := newCommentPaginateArgs(fieldArgs(ctx, nil, path...))
+			if err := validateFirstLast(args.first, args.last); err != nil {
+				return fmt.Errorf("validate first and last in path %q: %w", path, err)
+			}
+			pager, err := newCommentPager(args.opts)
+			if err != nil {
+				return fmt.Errorf("create new pager in path %q: %w", path, err)
+			}
+			if query, err = pager.applyFilter(query); err != nil {
 				return err
+			}
+			ignoredEdges := !hasCollectedField(ctx, append(path, edgesField)...)
+			if hasCollectedField(ctx, append(path, totalCountField)...) || hasCollectedField(ctx, append(path, pageInfoField)...) {
+				hasPagination := args.after != nil || args.first != nil || args.before != nil || args.last != nil
+				if hasPagination || ignoredEdges {
+					query := query.Clone()
+					u.loadTotal = append(u.loadTotal, func(ctx context.Context, nodes []*User) error {
+						ids := make([]driver.Value, len(nodes))
+						for i := range nodes {
+							ids[i] = nodes[i].ID
+						}
+						var v []struct {
+							NodeID int `sql:"user_id"`
+							Count  int `sql:"count"`
+						}
+						query.Where(func(s *sql.Selector) {
+							joinT := sql.Table(user.CommentsTable)
+							s.Join(joinT).On(s.C(comment.FieldID), joinT.C(user.CommentsPrimaryKey[1]))
+							s.Where(sql.InValues(joinT.C(user.CommentsPrimaryKey[0]), ids...))
+							s.Select(joinT.C(user.CommentsPrimaryKey[0]), sql.Count("*"))
+							s.GroupBy(joinT.C(user.CommentsPrimaryKey[0]))
+						})
+						if err := query.Select().Scan(ctx, &v); err != nil {
+							return err
+						}
+						m := make(map[int]int, len(v))
+						for i := range v {
+							m[v[i].NodeID] = v[i].Count
+						}
+						for i := range nodes {
+							n := m[nodes[i].ID]
+							if nodes[i].Edges.totalCount[2] == nil {
+								nodes[i].Edges.totalCount[2] = make(map[string]int)
+							}
+							nodes[i].Edges.totalCount[2][alias] = n
+						}
+						return nil
+					})
+				} else {
+					u.loadTotal = append(u.loadTotal, func(_ context.Context, nodes []*User) error {
+						for i := range nodes {
+							n := len(nodes[i].Edges.Comments)
+							if nodes[i].Edges.totalCount[2] == nil {
+								nodes[i].Edges.totalCount[2] = make(map[string]int)
+							}
+							nodes[i].Edges.totalCount[2][alias] = n
+						}
+						return nil
+					})
+				}
+			}
+			if ignoredEdges || (args.first != nil && *args.first == 0) || (args.last != nil && *args.last == 0) {
+				continue
+			}
+
+			query = pager.applyCursors(query, args.after, args.before)
+			if limit := paginateLimit(args.first, args.last); limit > 0 {
+				modify := limitRows(user.CommentsPrimaryKey[0], limit, pager.orderExpr(args.last != nil))
+				query.modifiers = append(query.modifiers, modify)
+			} else {
+				query = pager.applyOrder(query, args.last != nil)
+			}
+			path = append(path, edgesField, nodeField)
+			if field := collectedField(ctx, path...); field != nil {
+				if err := query.collectField(ctx, op, *field, path, satisfies...); err != nil {
+					return err
+				}
 			}
 			u.WithNamedComments(alias, func(wq *CommentQuery) {
 				*wq = *query
@@ -406,6 +751,28 @@ func newUserPaginateArgs(rv map[string]interface{}) *userPaginateArgs {
 	}
 	if v := rv[beforeField]; v != nil {
 		args.before = v.(*Cursor)
+	}
+	if v, ok := rv[orderByField]; ok {
+		switch v := v.(type) {
+		case map[string]interface{}:
+			var (
+				err1, err2 error
+				order      = &UserOrder{Field: &UserOrderField{}}
+			)
+			if d, ok := v[directionField]; ok {
+				err1 = order.Direction.UnmarshalGQL(d)
+			}
+			if f, ok := v[fieldField]; ok {
+				err2 = order.Field.UnmarshalGQL(f)
+			}
+			if err1 == nil && err2 == nil {
+				args.opts = append(args.opts, WithUserOrder(order))
+			}
+		case *UserOrder:
+			if v != nil {
+				args.opts = append(args.opts, WithUserOrder(v))
+			}
+		}
 	}
 	return args
 }

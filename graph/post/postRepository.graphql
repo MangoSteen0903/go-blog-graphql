@@ -15,5 +15,12 @@ extend type Mutation {
 
 extend type Query {
   seePost(id: Int!): PostResult!
-  seeUserPost(user_id: Int!): PostsResult!
+  seeUserPost(
+    after: Cursor
+    first: Int
+    before: Cursor
+    last: Int
+    orderBy: PostOrder
+    user_id: Int!
+  ): PostConnection!
 }

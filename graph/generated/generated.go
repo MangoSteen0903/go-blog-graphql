@@ -55,7 +55,24 @@ type ComplexityRoot struct {
 		LikeNum   func(childComplexity int) int
 		Likes     func(childComplexity int) int
 		Owner     func(childComplexity int) int
-		Post      func(childComplexity int) int
+		Post      func(childComplexity int, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.PostOrder) int
+	}
+
+	CommentConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	CommentEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	CommentsResult struct {
+		Comments func(childComplexity int) int
+		Error    func(childComplexity int) int
+		Ok       func(childComplexity int) int
 	}
 
 	DefaultResult struct {
@@ -106,7 +123,7 @@ type ComplexityRoot struct {
 	}
 
 	Post struct {
-		Comments  func(childComplexity int) int
+		Comments  func(childComplexity int, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.CommentOrder) int
 		Context   func(childComplexity int) int
 		CreatedAt func(childComplexity int) int
 		Hashtags  func(childComplexity int) int
@@ -115,6 +132,17 @@ type ComplexityRoot struct {
 		Likes     func(childComplexity int) int
 		Owner     func(childComplexity int) int
 		Title     func(childComplexity int) int
+	}
+
+	PostConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	PostEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	PostResult struct {
@@ -130,28 +158,40 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Comments    func(childComplexity int) int
-		Node        func(childComplexity int, id int) int
-		Nodes       func(childComplexity int, ids []int) int
-		Posts       func(childComplexity int) int
-		SeePost     func(childComplexity int, id int) int
-		SeeUser     func(childComplexity int, id int) int
-		SeeUserPost func(childComplexity int, userID int) int
-		SeeUsers    func(childComplexity int) int
-		Users       func(childComplexity int) int
+		Comments       func(childComplexity int, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.CommentOrder) int
+		Node           func(childComplexity int, id int) int
+		Nodes          func(childComplexity int, ids []int) int
+		Posts          func(childComplexity int, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.PostOrder) int
+		SeePost        func(childComplexity int, id int) int
+		SeePostComment func(childComplexity int, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.CommentOrder, postID int) int
+		SeeUser        func(childComplexity int, id int) int
+		SeeUserPost    func(childComplexity int, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.PostOrder, userID int) int
+		SeeUsers       func(childComplexity int, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.UserOrder) int
+		Users          func(childComplexity int, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.UserOrder) int
 	}
 
 	User struct {
-		Comments  func(childComplexity int) int
+		Comments  func(childComplexity int, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.CommentOrder) int
 		CreatedAt func(childComplexity int) int
 		ID        func(childComplexity int) int
 		IsAdmin   func(childComplexity int) int
 		Likes     func(childComplexity int) int
 		Location  func(childComplexity int) int
 		Password  func(childComplexity int) int
-		Posts     func(childComplexity int) int
+		Posts     func(childComplexity int, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.PostOrder) int
 		UploadImg func(childComplexity int) int
 		Username  func(childComplexity int) int
+	}
+
+	UserConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	UserEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	UserResult struct {
@@ -189,13 +229,14 @@ type PostResolver interface {
 type QueryResolver interface {
 	Node(ctx context.Context, id int) (ent.Noder, error)
 	Nodes(ctx context.Context, ids []int) ([]ent.Noder, error)
-	Comments(ctx context.Context) ([]*ent.Comment, error)
-	Posts(ctx context.Context) ([]*ent.Post, error)
-	Users(ctx context.Context) ([]*ent.User, error)
+	Comments(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.CommentOrder) (*ent.CommentConnection, error)
+	Posts(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.PostOrder) (*ent.PostConnection, error)
+	Users(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.UserOrder) (*ent.UserConnection, error)
+	SeePostComment(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.CommentOrder, postID int) (*ent.CommentConnection, error)
 	SeePost(ctx context.Context, id int) (*model.PostResult, error)
-	SeeUserPost(ctx context.Context, userID int) (*model.PostsResult, error)
+	SeeUserPost(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.PostOrder, userID int) (*ent.PostConnection, error)
 	SeeUser(ctx context.Context, id int) (*model.UserResult, error)
-	SeeUsers(ctx context.Context) (*model.UsersResult, error)
+	SeeUsers(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.UserOrder) (*model.UsersResult, error)
 }
 
 type executableSchema struct {
@@ -260,7 +301,68 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Comment.Post(childComplexity), true
+		args, err := ec.field_Comment_post_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Comment.Post(childComplexity, args["after"].(*ent.Cursor), args["first"].(*int), args["before"].(*ent.Cursor), args["last"].(*int), args["orderBy"].(*ent.PostOrder)), true
+
+	case "CommentConnection.edges":
+		if e.complexity.CommentConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.CommentConnection.Edges(childComplexity), true
+
+	case "CommentConnection.pageInfo":
+		if e.complexity.CommentConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.CommentConnection.PageInfo(childComplexity), true
+
+	case "CommentConnection.totalCount":
+		if e.complexity.CommentConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.CommentConnection.TotalCount(childComplexity), true
+
+	case "CommentEdge.cursor":
+		if e.complexity.CommentEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.CommentEdge.Cursor(childComplexity), true
+
+	case "CommentEdge.node":
+		if e.complexity.CommentEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.CommentEdge.Node(childComplexity), true
+
+	case "CommentsResult.comments":
+		if e.complexity.CommentsResult.Comments == nil {
+			break
+		}
+
+		return e.complexity.CommentsResult.Comments(childComplexity), true
+
+	case "CommentsResult.error":
+		if e.complexity.CommentsResult.Error == nil {
+			break
+		}
+
+		return e.complexity.CommentsResult.Error(childComplexity), true
+
+	case "CommentsResult.ok":
+		if e.complexity.CommentsResult.Ok == nil {
+			break
+		}
+
+		return e.complexity.CommentsResult.Ok(childComplexity), true
 
 	case "DefaultResult.error":
 		if e.complexity.DefaultResult.Error == nil {
@@ -525,7 +627,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Post.Comments(childComplexity), true
+		args, err := ec.field_Post_comments_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Post.Comments(childComplexity, args["after"].(*ent.Cursor), args["first"].(*int), args["before"].(*ent.Cursor), args["last"].(*int), args["orderBy"].(*ent.CommentOrder)), true
 
 	case "Post.context":
 		if e.complexity.Post.Context == nil {
@@ -583,6 +690,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Post.Title(childComplexity), true
 
+	case "PostConnection.edges":
+		if e.complexity.PostConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.PostConnection.Edges(childComplexity), true
+
+	case "PostConnection.pageInfo":
+		if e.complexity.PostConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.PostConnection.PageInfo(childComplexity), true
+
+	case "PostConnection.totalCount":
+		if e.complexity.PostConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.PostConnection.TotalCount(childComplexity), true
+
+	case "PostEdge.cursor":
+		if e.complexity.PostEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.PostEdge.Cursor(childComplexity), true
+
+	case "PostEdge.node":
+		if e.complexity.PostEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.PostEdge.Node(childComplexity), true
+
 	case "PostResult.error":
 		if e.complexity.PostResult.Error == nil {
 			break
@@ -630,7 +772,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Query.Comments(childComplexity), true
+		args, err := ec.field_Query_comments_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Comments(childComplexity, args["after"].(*ent.Cursor), args["first"].(*int), args["before"].(*ent.Cursor), args["last"].(*int), args["orderBy"].(*ent.CommentOrder)), true
 
 	case "Query.node":
 		if e.complexity.Query.Node == nil {
@@ -661,7 +808,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Query.Posts(childComplexity), true
+		args, err := ec.field_Query_posts_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Posts(childComplexity, args["after"].(*ent.Cursor), args["first"].(*int), args["before"].(*ent.Cursor), args["last"].(*int), args["orderBy"].(*ent.PostOrder)), true
 
 	case "Query.seePost":
 		if e.complexity.Query.SeePost == nil {
@@ -674,6 +826,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.SeePost(childComplexity, args["id"].(int)), true
+
+	case "Query.seePostComment":
+		if e.complexity.Query.SeePostComment == nil {
+			break
+		}
+
+		args, err := ec.field_Query_seePostComment_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.SeePostComment(childComplexity, args["after"].(*ent.Cursor), args["first"].(*int), args["before"].(*ent.Cursor), args["last"].(*int), args["orderBy"].(*ent.CommentOrder), args["postId"].(int)), true
 
 	case "Query.seeUser":
 		if e.complexity.Query.SeeUser == nil {
@@ -697,28 +861,43 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.SeeUserPost(childComplexity, args["user_id"].(int)), true
+		return e.complexity.Query.SeeUserPost(childComplexity, args["after"].(*ent.Cursor), args["first"].(*int), args["before"].(*ent.Cursor), args["last"].(*int), args["orderBy"].(*ent.PostOrder), args["user_id"].(int)), true
 
 	case "Query.seeUsers":
 		if e.complexity.Query.SeeUsers == nil {
 			break
 		}
 
-		return e.complexity.Query.SeeUsers(childComplexity), true
+		args, err := ec.field_Query_seeUsers_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.SeeUsers(childComplexity, args["after"].(*ent.Cursor), args["first"].(*int), args["before"].(*ent.Cursor), args["last"].(*int), args["orderBy"].(*ent.UserOrder)), true
 
 	case "Query.users":
 		if e.complexity.Query.Users == nil {
 			break
 		}
 
-		return e.complexity.Query.Users(childComplexity), true
+		args, err := ec.field_Query_users_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Users(childComplexity, args["after"].(*ent.Cursor), args["first"].(*int), args["before"].(*ent.Cursor), args["last"].(*int), args["orderBy"].(*ent.UserOrder)), true
 
 	case "User.comments":
 		if e.complexity.User.Comments == nil {
 			break
 		}
 
-		return e.complexity.User.Comments(childComplexity), true
+		args, err := ec.field_User_comments_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.User.Comments(childComplexity, args["after"].(*ent.Cursor), args["first"].(*int), args["before"].(*ent.Cursor), args["last"].(*int), args["orderBy"].(*ent.CommentOrder)), true
 
 	case "User.createdAt":
 		if e.complexity.User.CreatedAt == nil {
@@ -767,7 +946,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.User.Posts(childComplexity), true
+		args, err := ec.field_User_posts_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.User.Posts(childComplexity, args["after"].(*ent.Cursor), args["first"].(*int), args["before"].(*ent.Cursor), args["last"].(*int), args["orderBy"].(*ent.PostOrder)), true
 
 	case "User.uploadImg":
 		if e.complexity.User.UploadImg == nil {
@@ -782,6 +966,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.User.Username(childComplexity), true
+
+	case "UserConnection.edges":
+		if e.complexity.UserConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.UserConnection.Edges(childComplexity), true
+
+	case "UserConnection.pageInfo":
+		if e.complexity.UserConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.UserConnection.PageInfo(childComplexity), true
+
+	case "UserConnection.totalCount":
+		if e.complexity.UserConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.UserConnection.TotalCount(childComplexity), true
+
+	case "UserEdge.cursor":
+		if e.complexity.UserEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.UserEdge.Cursor(childComplexity), true
+
+	case "UserEdge.node":
+		if e.complexity.UserEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.UserEdge.Node(childComplexity), true
 
 	case "UserResult.error":
 		if e.complexity.UserResult.Error == nil {
@@ -833,12 +1052,15 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputCommentOrder,
 		ec.unmarshalInputCreateCommentInput,
 		ec.unmarshalInputCreatePostInput,
 		ec.unmarshalInputCreateUserInput,
+		ec.unmarshalInputPostOrder,
 		ec.unmarshalInputUpdateCommentInput,
 		ec.unmarshalInputUpdatePostInput,
 		ec.unmarshalInputUpdateUserInput,
+		ec.unmarshalInputUserOrder,
 	)
 	first := true
 
@@ -909,6 +1131,17 @@ var sources = []*ast.Source{
 extend type Comment {
   likeNum: Int!
 }
+
+extend type Query {
+  seePostComment(
+    after: Cursor
+    first: Int
+    before: Cursor
+    last: Int
+    orderBy: CommentOrder
+    postId: Int!
+  ): CommentConnection!
+}
 `, BuiltIn: false},
 	{Name: "../post/postRepository.graphql", Input: `extend type Post {
   likeNum: Int!
@@ -927,7 +1160,14 @@ extend type Mutation {
 
 extend type Query {
   seePost(id: Int!): PostResult!
-  seeUserPost(user_id: Int!): PostsResult!
+  seeUserPost(
+    after: Cursor
+    first: Int
+    before: Cursor
+    last: Int
+    orderBy: PostOrder
+    user_id: Int!
+  ): PostConnection!
 }
 `, BuiltIn: false},
 	{Name: "../user/userRepository.graphql", Input: `scalar Upload
@@ -940,10 +1180,16 @@ extend type Mutation {
 
 extend type Query {
   seeUser(id: Int!): UserResult!
-  seeUsers: UsersResult!
+  seeUsers(
+    after: Cursor
+    first: Int
+    before: Cursor
+    last: Int
+    orderBy: UserOrder
+  ): UsersResult!
 }
 `, BuiltIn: false},
-	{Name: "../utils/utils.graphql", Input: `interface Result {
+	{Name: "../utils/results.graphql", Input: `interface Result {
   ok: Boolean!
   error: String
 }
@@ -968,7 +1214,7 @@ type UserResult implements Result {
 type UsersResult implements Result {
   ok: Boolean!
   error: String
-  users: [User]
+  users: UserConnection!
 }
 
 type PostResult implements Result {
@@ -980,7 +1226,13 @@ type PostResult implements Result {
 type PostsResult implements Result {
   ok: Boolean!
   error: String
-  posts: [Post]
+  posts: PostConnection!
+}
+
+type CommentsResult implements Result {
+  ok: Boolean!
+  error: String
+  comments: CommentConnection!
 }
 `, BuiltIn: false},
 	{Name: "../../ent.graphql", Input: `directive @goField(forceResolver: Boolean, name: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
@@ -990,8 +1242,50 @@ type Comment implements Node {
   context: String!
   createdAt: Time!
   owner: [User!]
-  post: [Post!]
+  post(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: Cursor
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the elements in the list that come before the specified cursor."""
+    before: Cursor
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Ordering options for Posts returned from the connection."""
+    orderBy: PostOrder
+  ): PostConnection!
   likes: [Like!]
+}
+"""A connection to a list of items."""
+type CommentConnection {
+  """A list of edges."""
+  edges: [CommentEdge]
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+  """Identifies the total count of items in the connection."""
+  totalCount: Int!
+}
+"""An edge in a connection."""
+type CommentEdge {
+  """The item at the end of the edge."""
+  node: Comment
+  """A cursor for use in pagination."""
+  cursor: Cursor!
+}
+"""Ordering options for Comment connections"""
+input CommentOrder {
+  """The ordering direction."""
+  direction: OrderDirection! = ASC
+  """The field by which to order Comments."""
+  field: CommentOrderField!
+}
+"""Properties by which Comment connections can be ordered."""
+enum CommentOrderField {
+  CREATED_AT
 }
 """
 CreateCommentInput is used for create Comment object.
@@ -1086,8 +1380,50 @@ type Post implements Node {
   createdAt: Time!
   hashtags: [Hashtag!]
   likes: [Like!]
-  comments: [Comment!]
+  comments(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: Cursor
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the elements in the list that come before the specified cursor."""
+    before: Cursor
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Ordering options for Comments returned from the connection."""
+    orderBy: CommentOrder
+  ): CommentConnection!
   owner: User
+}
+"""A connection to a list of items."""
+type PostConnection {
+  """A list of edges."""
+  edges: [PostEdge]
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+  """Identifies the total count of items in the connection."""
+  totalCount: Int!
+}
+"""An edge in a connection."""
+type PostEdge {
+  """The item at the end of the edge."""
+  node: Post
+  """A cursor for use in pagination."""
+  cursor: Cursor!
+}
+"""Ordering options for Post connections"""
+input PostOrder {
+  """The ordering direction."""
+  direction: OrderDirection! = ASC
+  """The field by which to order Posts."""
+  field: PostOrderField!
+}
+"""Properties by which Post connections can be ordered."""
+enum PostOrderField {
+  CREATED_AT
 }
 type Query {
   """Fetches an object given its ID."""
@@ -1100,9 +1436,54 @@ type Query {
     """The list of node IDs."""
     ids: [ID!]!
   ): [Node]!
-  comments: [Comment!]!
-  posts: [Post!]!
-  users: [User!]!
+  comments(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: Cursor
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the elements in the list that come before the specified cursor."""
+    before: Cursor
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Ordering options for Comments returned from the connection."""
+    orderBy: CommentOrder
+  ): CommentConnection!
+  posts(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: Cursor
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the elements in the list that come before the specified cursor."""
+    before: Cursor
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Ordering options for Posts returned from the connection."""
+    orderBy: PostOrder
+  ): PostConnection!
+  users(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: Cursor
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the elements in the list that come before the specified cursor."""
+    before: Cursor
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Ordering options for Users returned from the connection."""
+    orderBy: UserOrder
+  ): UserConnection!
 }
 """The builtin Time type"""
 scalar Time
@@ -1165,9 +1546,66 @@ type User implements Node {
   uploadImg: String
   isAdmin: Boolean!
   createdAt: Time!
-  posts: [Post!]
+  posts(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: Cursor
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the elements in the list that come before the specified cursor."""
+    before: Cursor
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Ordering options for Posts returned from the connection."""
+    orderBy: PostOrder
+  ): PostConnection!
   likes: [Like!]
-  comments: [Comment!]
+  comments(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: Cursor
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the elements in the list that come before the specified cursor."""
+    before: Cursor
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Ordering options for Comments returned from the connection."""
+    orderBy: CommentOrder
+  ): CommentConnection!
+}
+"""A connection to a list of items."""
+type UserConnection {
+  """A list of edges."""
+  edges: [UserEdge]
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+  """Identifies the total count of items in the connection."""
+  totalCount: Int!
+}
+"""An edge in a connection."""
+type UserEdge {
+  """The item at the end of the edge."""
+  node: User
+  """A cursor for use in pagination."""
+  cursor: Cursor!
+}
+"""Ordering options for User connections"""
+input UserOrder {
+  """The ordering direction."""
+  direction: OrderDirection! = ASC
+  """The field by which to order Users."""
+  field: UserOrderField!
+}
+"""Properties by which User connections can be ordered."""
+enum UserOrderField {
+  CREATED_AT
 }
 `, BuiltIn: false},
 }
@@ -1176,6 +1614,57 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Comment_post_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *ent.Cursor
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg0, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg1
+	var arg2 *ent.Cursor
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg2
+	var arg3 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["last"] = arg3
+	var arg4 *ent.PostOrder
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+		arg4, err = ec.unmarshalOPostOrder2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPostOrder(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["orderBy"] = arg4
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_createPost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -1423,6 +1912,57 @@ func (ec *executionContext) field_Mutation_updateUser_args(ctx context.Context, 
 	return args, nil
 }
 
+func (ec *executionContext) field_Post_comments_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *ent.Cursor
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg0, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg1
+	var arg2 *ent.Cursor
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg2
+	var arg3 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["last"] = arg3
+	var arg4 *ent.CommentOrder
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+		arg4, err = ec.unmarshalOCommentOrder2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCommentOrder(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["orderBy"] = arg4
+	return args, nil
+}
+
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1435,6 +1975,57 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_comments_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *ent.Cursor
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg0, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg1
+	var arg2 *ent.Cursor
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg2
+	var arg3 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["last"] = arg3
+	var arg4 *ent.CommentOrder
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+		arg4, err = ec.unmarshalOCommentOrder2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCommentOrder(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["orderBy"] = arg4
 	return args, nil
 }
 
@@ -1468,6 +2059,117 @@ func (ec *executionContext) field_Query_nodes_args(ctx context.Context, rawArgs 
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_posts_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *ent.Cursor
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg0, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg1
+	var arg2 *ent.Cursor
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg2
+	var arg3 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["last"] = arg3
+	var arg4 *ent.PostOrder
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+		arg4, err = ec.unmarshalOPostOrder2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPostOrder(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["orderBy"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_seePostComment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *ent.Cursor
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg0, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg1
+	var arg2 *ent.Cursor
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg2
+	var arg3 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["last"] = arg3
+	var arg4 *ent.CommentOrder
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+		arg4, err = ec.unmarshalOCommentOrder2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCommentOrder(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["orderBy"] = arg4
+	var arg5 int
+	if tmp, ok := rawArgs["postId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
+		arg5, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["postId"] = arg5
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_seePost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1486,15 +2188,60 @@ func (ec *executionContext) field_Query_seePost_args(ctx context.Context, rawArg
 func (ec *executionContext) field_Query_seeUserPost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 int
-	if tmp, ok := rawArgs["user_id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("user_id"))
-		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+	var arg0 *ent.Cursor
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg0, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCursor(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["user_id"] = arg0
+	args["after"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg1
+	var arg2 *ent.Cursor
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg2
+	var arg3 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["last"] = arg3
+	var arg4 *ent.PostOrder
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+		arg4, err = ec.unmarshalOPostOrder2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPostOrder(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["orderBy"] = arg4
+	var arg5 int
+	if tmp, ok := rawArgs["user_id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("user_id"))
+		arg5, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["user_id"] = arg5
 	return args, nil
 }
 
@@ -1510,6 +2257,210 @@ func (ec *executionContext) field_Query_seeUser_args(ctx context.Context, rawArg
 		}
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_seeUsers_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *ent.Cursor
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg0, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg1
+	var arg2 *ent.Cursor
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg2
+	var arg3 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["last"] = arg3
+	var arg4 *ent.UserOrder
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+		arg4, err = ec.unmarshalOUserOrder2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐUserOrder(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["orderBy"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_users_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *ent.Cursor
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg0, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg1
+	var arg2 *ent.Cursor
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg2
+	var arg3 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["last"] = arg3
+	var arg4 *ent.UserOrder
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+		arg4, err = ec.unmarshalOUserOrder2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐUserOrder(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["orderBy"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_User_comments_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *ent.Cursor
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg0, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg1
+	var arg2 *ent.Cursor
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg2
+	var arg3 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["last"] = arg3
+	var arg4 *ent.CommentOrder
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+		arg4, err = ec.unmarshalOCommentOrder2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCommentOrder(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["orderBy"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_User_posts_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *ent.Cursor
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg0, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg1
+	var arg2 *ent.Cursor
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg2
+	var arg3 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["last"] = arg3
+	var arg4 *ent.PostOrder
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+		arg4, err = ec.unmarshalOPostOrder2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPostOrder(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["orderBy"] = arg4
 	return args, nil
 }
 
@@ -1760,18 +2711,21 @@ func (ec *executionContext) _Comment_post(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Post(ctx)
+		return obj.Post(ctx, fc.Args["after"].(*ent.Cursor), fc.Args["first"].(*int), fc.Args["before"].(*ent.Cursor), fc.Args["last"].(*int), fc.Args["orderBy"].(*ent.PostOrder))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.([]*ent.Post)
+	res := resTmp.(*ent.PostConnection)
 	fc.Result = res
-	return ec.marshalOPost2ᚕᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPostᚄ(ctx, field.Selections, res)
+	return ec.marshalNPostConnection2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPostConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Comment_post(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1782,27 +2736,26 @@ func (ec *executionContext) fieldContext_Comment_post(ctx context.Context, field
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Post_id(ctx, field)
-			case "title":
-				return ec.fieldContext_Post_title(ctx, field)
-			case "context":
-				return ec.fieldContext_Post_context(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Post_createdAt(ctx, field)
-			case "hashtags":
-				return ec.fieldContext_Post_hashtags(ctx, field)
-			case "likes":
-				return ec.fieldContext_Post_likes(ctx, field)
-			case "comments":
-				return ec.fieldContext_Post_comments(ctx, field)
-			case "owner":
-				return ec.fieldContext_Post_owner(ctx, field)
-			case "likeNum":
-				return ec.fieldContext_Post_likeNum(ctx, field)
+			case "edges":
+				return ec.fieldContext_PostConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_PostConnection_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_PostConnection_totalCount(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Post", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type PostConnection", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Comment_post_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
 	}
 	return fc, nil
 }
@@ -1899,6 +2852,389 @@ func (ec *executionContext) fieldContext_Comment_likeNum(ctx context.Context, fi
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CommentConnection_edges(ctx context.Context, field graphql.CollectedField, obj *ent.CommentConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CommentConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*ent.CommentEdge)
+	fc.Result = res
+	return ec.marshalOCommentEdge2ᚕᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCommentEdge(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CommentConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CommentConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "node":
+				return ec.fieldContext_CommentEdge_node(ctx, field)
+			case "cursor":
+				return ec.fieldContext_CommentEdge_cursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CommentEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CommentConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *ent.CommentConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CommentConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(ent.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2githubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CommentConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CommentConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CommentConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *ent.CommentConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CommentConnection_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CommentConnection_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CommentConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CommentEdge_node(ctx context.Context, field graphql.CollectedField, obj *ent.CommentEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CommentEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*ent.Comment)
+	fc.Result = res
+	return ec.marshalOComment2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐComment(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CommentEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CommentEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Comment_id(ctx, field)
+			case "context":
+				return ec.fieldContext_Comment_context(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Comment_createdAt(ctx, field)
+			case "owner":
+				return ec.fieldContext_Comment_owner(ctx, field)
+			case "post":
+				return ec.fieldContext_Comment_post(ctx, field)
+			case "likes":
+				return ec.fieldContext_Comment_likes(ctx, field)
+			case "likeNum":
+				return ec.fieldContext_Comment_likeNum(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Comment", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CommentEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *ent.CommentEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CommentEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(ent.Cursor)
+	fc.Result = res
+	return ec.marshalNCursor2githubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCursor(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CommentEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CommentEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Cursor does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CommentsResult_ok(ctx context.Context, field graphql.CollectedField, obj *model.CommentsResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CommentsResult_ok(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Ok, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CommentsResult_ok(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CommentsResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CommentsResult_error(ctx context.Context, field graphql.CollectedField, obj *model.CommentsResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CommentsResult_error(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Error, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CommentsResult_error(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CommentsResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CommentsResult_comments(ctx context.Context, field graphql.CollectedField, obj *model.CommentsResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CommentsResult_comments(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Comments, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*ent.CommentConnection)
+	fc.Result = res
+	return ec.marshalNCommentConnection2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCommentConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CommentsResult_comments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CommentsResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_CommentConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_CommentConnection_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_CommentConnection_totalCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CommentConnection", field.Name)
 		},
 	}
 	return fc, nil
@@ -3702,18 +5038,21 @@ func (ec *executionContext) _Post_comments(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Comments(ctx)
+		return obj.Comments(ctx, fc.Args["after"].(*ent.Cursor), fc.Args["first"].(*int), fc.Args["before"].(*ent.Cursor), fc.Args["last"].(*int), fc.Args["orderBy"].(*ent.CommentOrder))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.([]*ent.Comment)
+	res := resTmp.(*ent.CommentConnection)
 	fc.Result = res
-	return ec.marshalOComment2ᚕᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCommentᚄ(ctx, field.Selections, res)
+	return ec.marshalNCommentConnection2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCommentConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Post_comments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3724,23 +5063,26 @@ func (ec *executionContext) fieldContext_Post_comments(ctx context.Context, fiel
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Comment_id(ctx, field)
-			case "context":
-				return ec.fieldContext_Comment_context(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Comment_createdAt(ctx, field)
-			case "owner":
-				return ec.fieldContext_Comment_owner(ctx, field)
-			case "post":
-				return ec.fieldContext_Comment_post(ctx, field)
-			case "likes":
-				return ec.fieldContext_Comment_likes(ctx, field)
-			case "likeNum":
-				return ec.fieldContext_Comment_likeNum(ctx, field)
+			case "edges":
+				return ec.fieldContext_CommentConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_CommentConnection_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_CommentConnection_totalCount(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Comment", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type CommentConnection", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Post_comments_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
 	}
 	return fc, nil
 }
@@ -3847,6 +5189,256 @@ func (ec *executionContext) fieldContext_Post_likeNum(ctx context.Context, field
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PostConnection_edges(ctx context.Context, field graphql.CollectedField, obj *ent.PostConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PostConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*ent.PostEdge)
+	fc.Result = res
+	return ec.marshalOPostEdge2ᚕᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPostEdge(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PostConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PostConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "node":
+				return ec.fieldContext_PostEdge_node(ctx, field)
+			case "cursor":
+				return ec.fieldContext_PostEdge_cursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PostEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PostConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *ent.PostConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PostConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(ent.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2githubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PostConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PostConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PostConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *ent.PostConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PostConnection_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PostConnection_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PostConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PostEdge_node(ctx context.Context, field graphql.CollectedField, obj *ent.PostEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PostEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*ent.Post)
+	fc.Result = res
+	return ec.marshalOPost2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPost(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PostEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PostEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Post_id(ctx, field)
+			case "title":
+				return ec.fieldContext_Post_title(ctx, field)
+			case "context":
+				return ec.fieldContext_Post_context(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Post_createdAt(ctx, field)
+			case "hashtags":
+				return ec.fieldContext_Post_hashtags(ctx, field)
+			case "likes":
+				return ec.fieldContext_Post_likes(ctx, field)
+			case "comments":
+				return ec.fieldContext_Post_comments(ctx, field)
+			case "owner":
+				return ec.fieldContext_Post_owner(ctx, field)
+			case "likeNum":
+				return ec.fieldContext_Post_likeNum(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Post", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PostEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *ent.PostEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PostEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(ent.Cursor)
+	fc.Result = res
+	return ec.marshalNCursor2githubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCursor(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PostEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PostEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Cursor does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4104,11 +5696,14 @@ func (ec *executionContext) _PostsResult_posts(ctx context.Context, field graphq
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.([]*ent.Post)
+	res := resTmp.(*ent.PostConnection)
 	fc.Result = res
-	return ec.marshalOPost2ᚕᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPost(ctx, field.Selections, res)
+	return ec.marshalNPostConnection2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPostConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PostsResult_posts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4119,26 +5714,14 @@ func (ec *executionContext) fieldContext_PostsResult_posts(ctx context.Context, 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Post_id(ctx, field)
-			case "title":
-				return ec.fieldContext_Post_title(ctx, field)
-			case "context":
-				return ec.fieldContext_Post_context(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Post_createdAt(ctx, field)
-			case "hashtags":
-				return ec.fieldContext_Post_hashtags(ctx, field)
-			case "likes":
-				return ec.fieldContext_Post_likes(ctx, field)
-			case "comments":
-				return ec.fieldContext_Post_comments(ctx, field)
-			case "owner":
-				return ec.fieldContext_Post_owner(ctx, field)
-			case "likeNum":
-				return ec.fieldContext_Post_likeNum(ctx, field)
+			case "edges":
+				return ec.fieldContext_PostConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_PostConnection_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_PostConnection_totalCount(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Post", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type PostConnection", field.Name)
 		},
 	}
 	return fc, nil
@@ -4265,7 +5848,7 @@ func (ec *executionContext) _Query_comments(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Comments(rctx)
+		return ec.resolvers.Query().Comments(rctx, fc.Args["after"].(*ent.Cursor), fc.Args["first"].(*int), fc.Args["before"].(*ent.Cursor), fc.Args["last"].(*int), fc.Args["orderBy"].(*ent.CommentOrder))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4277,9 +5860,9 @@ func (ec *executionContext) _Query_comments(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*ent.Comment)
+	res := resTmp.(*ent.CommentConnection)
 	fc.Result = res
-	return ec.marshalNComment2ᚕᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCommentᚄ(ctx, field.Selections, res)
+	return ec.marshalNCommentConnection2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCommentConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_comments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4290,23 +5873,26 @@ func (ec *executionContext) fieldContext_Query_comments(ctx context.Context, fie
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Comment_id(ctx, field)
-			case "context":
-				return ec.fieldContext_Comment_context(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Comment_createdAt(ctx, field)
-			case "owner":
-				return ec.fieldContext_Comment_owner(ctx, field)
-			case "post":
-				return ec.fieldContext_Comment_post(ctx, field)
-			case "likes":
-				return ec.fieldContext_Comment_likes(ctx, field)
-			case "likeNum":
-				return ec.fieldContext_Comment_likeNum(ctx, field)
+			case "edges":
+				return ec.fieldContext_CommentConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_CommentConnection_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_CommentConnection_totalCount(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Comment", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type CommentConnection", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_comments_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
 	}
 	return fc, nil
 }
@@ -4325,7 +5911,7 @@ func (ec *executionContext) _Query_posts(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Posts(rctx)
+		return ec.resolvers.Query().Posts(rctx, fc.Args["after"].(*ent.Cursor), fc.Args["first"].(*int), fc.Args["before"].(*ent.Cursor), fc.Args["last"].(*int), fc.Args["orderBy"].(*ent.PostOrder))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4337,9 +5923,9 @@ func (ec *executionContext) _Query_posts(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*ent.Post)
+	res := resTmp.(*ent.PostConnection)
 	fc.Result = res
-	return ec.marshalNPost2ᚕᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPostᚄ(ctx, field.Selections, res)
+	return ec.marshalNPostConnection2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPostConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_posts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4350,27 +5936,26 @@ func (ec *executionContext) fieldContext_Query_posts(ctx context.Context, field 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Post_id(ctx, field)
-			case "title":
-				return ec.fieldContext_Post_title(ctx, field)
-			case "context":
-				return ec.fieldContext_Post_context(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Post_createdAt(ctx, field)
-			case "hashtags":
-				return ec.fieldContext_Post_hashtags(ctx, field)
-			case "likes":
-				return ec.fieldContext_Post_likes(ctx, field)
-			case "comments":
-				return ec.fieldContext_Post_comments(ctx, field)
-			case "owner":
-				return ec.fieldContext_Post_owner(ctx, field)
-			case "likeNum":
-				return ec.fieldContext_Post_likeNum(ctx, field)
+			case "edges":
+				return ec.fieldContext_PostConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_PostConnection_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_PostConnection_totalCount(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Post", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type PostConnection", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_posts_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
 	}
 	return fc, nil
 }
@@ -4389,7 +5974,7 @@ func (ec *executionContext) _Query_users(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Users(rctx)
+		return ec.resolvers.Query().Users(rctx, fc.Args["after"].(*ent.Cursor), fc.Args["first"].(*int), fc.Args["before"].(*ent.Cursor), fc.Args["last"].(*int), fc.Args["orderBy"].(*ent.UserOrder))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4401,9 +5986,9 @@ func (ec *executionContext) _Query_users(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*ent.User)
+	res := resTmp.(*ent.UserConnection)
 	fc.Result = res
-	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐUserᚄ(ctx, field.Selections, res)
+	return ec.marshalNUserConnection2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐUserConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_users(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4414,29 +5999,89 @@ func (ec *executionContext) fieldContext_Query_users(ctx context.Context, field 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "username":
-				return ec.fieldContext_User_username(ctx, field)
-			case "password":
-				return ec.fieldContext_User_password(ctx, field)
-			case "location":
-				return ec.fieldContext_User_location(ctx, field)
-			case "uploadImg":
-				return ec.fieldContext_User_uploadImg(ctx, field)
-			case "isAdmin":
-				return ec.fieldContext_User_isAdmin(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_User_createdAt(ctx, field)
-			case "posts":
-				return ec.fieldContext_User_posts(ctx, field)
-			case "likes":
-				return ec.fieldContext_User_likes(ctx, field)
-			case "comments":
-				return ec.fieldContext_User_comments(ctx, field)
+			case "edges":
+				return ec.fieldContext_UserConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_UserConnection_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_UserConnection_totalCount(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type UserConnection", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_users_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_seePostComment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_seePostComment(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().SeePostComment(rctx, fc.Args["after"].(*ent.Cursor), fc.Args["first"].(*int), fc.Args["before"].(*ent.Cursor), fc.Args["last"].(*int), fc.Args["orderBy"].(*ent.CommentOrder), fc.Args["postId"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*ent.CommentConnection)
+	fc.Result = res
+	return ec.marshalNCommentConnection2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCommentConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_seePostComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_CommentConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_CommentConnection_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_CommentConnection_totalCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CommentConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_seePostComment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
 	}
 	return fc, nil
 }
@@ -4518,7 +6163,7 @@ func (ec *executionContext) _Query_seeUserPost(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().SeeUserPost(rctx, fc.Args["user_id"].(int))
+		return ec.resolvers.Query().SeeUserPost(rctx, fc.Args["after"].(*ent.Cursor), fc.Args["first"].(*int), fc.Args["before"].(*ent.Cursor), fc.Args["last"].(*int), fc.Args["orderBy"].(*ent.PostOrder), fc.Args["user_id"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4530,9 +6175,9 @@ func (ec *executionContext) _Query_seeUserPost(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.PostsResult)
+	res := resTmp.(*ent.PostConnection)
 	fc.Result = res
-	return ec.marshalNPostsResult2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋgraphᚋmodelᚐPostsResult(ctx, field.Selections, res)
+	return ec.marshalNPostConnection2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPostConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_seeUserPost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4543,14 +6188,14 @@ func (ec *executionContext) fieldContext_Query_seeUserPost(ctx context.Context, 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "ok":
-				return ec.fieldContext_PostsResult_ok(ctx, field)
-			case "error":
-				return ec.fieldContext_PostsResult_error(ctx, field)
-			case "posts":
-				return ec.fieldContext_PostsResult_posts(ctx, field)
+			case "edges":
+				return ec.fieldContext_PostConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_PostConnection_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_PostConnection_totalCount(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type PostsResult", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type PostConnection", field.Name)
 		},
 	}
 	defer func() {
@@ -4644,7 +6289,7 @@ func (ec *executionContext) _Query_seeUsers(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().SeeUsers(rctx)
+		return ec.resolvers.Query().SeeUsers(rctx, fc.Args["after"].(*ent.Cursor), fc.Args["first"].(*int), fc.Args["before"].(*ent.Cursor), fc.Args["last"].(*int), fc.Args["orderBy"].(*ent.UserOrder))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4678,6 +6323,17 @@ func (ec *executionContext) fieldContext_Query_seeUsers(ctx context.Context, fie
 			}
 			return nil, fmt.Errorf("no field named %q was found under type UsersResult", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_seeUsers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
 	}
 	return fc, nil
 }
@@ -5127,18 +6783,21 @@ func (ec *executionContext) _User_posts(ctx context.Context, field graphql.Colle
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Posts(ctx)
+		return obj.Posts(ctx, fc.Args["after"].(*ent.Cursor), fc.Args["first"].(*int), fc.Args["before"].(*ent.Cursor), fc.Args["last"].(*int), fc.Args["orderBy"].(*ent.PostOrder))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.([]*ent.Post)
+	res := resTmp.(*ent.PostConnection)
 	fc.Result = res
-	return ec.marshalOPost2ᚕᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPostᚄ(ctx, field.Selections, res)
+	return ec.marshalNPostConnection2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPostConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_posts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5149,27 +6808,26 @@ func (ec *executionContext) fieldContext_User_posts(ctx context.Context, field g
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Post_id(ctx, field)
-			case "title":
-				return ec.fieldContext_Post_title(ctx, field)
-			case "context":
-				return ec.fieldContext_Post_context(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Post_createdAt(ctx, field)
-			case "hashtags":
-				return ec.fieldContext_Post_hashtags(ctx, field)
-			case "likes":
-				return ec.fieldContext_Post_likes(ctx, field)
-			case "comments":
-				return ec.fieldContext_Post_comments(ctx, field)
-			case "owner":
-				return ec.fieldContext_Post_owner(ctx, field)
-			case "likeNum":
-				return ec.fieldContext_Post_likeNum(ctx, field)
+			case "edges":
+				return ec.fieldContext_PostConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_PostConnection_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_PostConnection_totalCount(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Post", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type PostConnection", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_User_posts_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
 	}
 	return fc, nil
 }
@@ -5241,18 +6899,21 @@ func (ec *executionContext) _User_comments(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Comments(ctx)
+		return obj.Comments(ctx, fc.Args["after"].(*ent.Cursor), fc.Args["first"].(*int), fc.Args["before"].(*ent.Cursor), fc.Args["last"].(*int), fc.Args["orderBy"].(*ent.CommentOrder))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.([]*ent.Comment)
+	res := resTmp.(*ent.CommentConnection)
 	fc.Result = res
-	return ec.marshalOComment2ᚕᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCommentᚄ(ctx, field.Selections, res)
+	return ec.marshalNCommentConnection2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCommentConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_comments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5263,22 +6924,277 @@ func (ec *executionContext) fieldContext_User_comments(ctx context.Context, fiel
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Comment_id(ctx, field)
-			case "context":
-				return ec.fieldContext_Comment_context(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Comment_createdAt(ctx, field)
-			case "owner":
-				return ec.fieldContext_Comment_owner(ctx, field)
-			case "post":
-				return ec.fieldContext_Comment_post(ctx, field)
-			case "likes":
-				return ec.fieldContext_Comment_likes(ctx, field)
-			case "likeNum":
-				return ec.fieldContext_Comment_likeNum(ctx, field)
+			case "edges":
+				return ec.fieldContext_CommentConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_CommentConnection_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_CommentConnection_totalCount(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Comment", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type CommentConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_User_comments_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserConnection_edges(ctx context.Context, field graphql.CollectedField, obj *ent.UserConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*ent.UserEdge)
+	fc.Result = res
+	return ec.marshalOUserEdge2ᚕᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐUserEdge(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UserConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "node":
+				return ec.fieldContext_UserEdge_node(ctx, field)
+			case "cursor":
+				return ec.fieldContext_UserEdge_cursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UserEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *ent.UserConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(ent.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2githubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UserConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *ent.UserConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserConnection_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserConnection_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UserConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserEdge_node(ctx context.Context, field graphql.CollectedField, obj *ent.UserEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*ent.User)
+	fc.Result = res
+	return ec.marshalOUser2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UserEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "username":
+				return ec.fieldContext_User_username(ctx, field)
+			case "password":
+				return ec.fieldContext_User_password(ctx, field)
+			case "location":
+				return ec.fieldContext_User_location(ctx, field)
+			case "uploadImg":
+				return ec.fieldContext_User_uploadImg(ctx, field)
+			case "isAdmin":
+				return ec.fieldContext_User_isAdmin(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_User_createdAt(ctx, field)
+			case "posts":
+				return ec.fieldContext_User_posts(ctx, field)
+			case "likes":
+				return ec.fieldContext_User_likes(ctx, field)
+			case "comments":
+				return ec.fieldContext_User_comments(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *ent.UserEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(ent.Cursor)
+	fc.Result = res
+	return ec.marshalNCursor2githubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCursor(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UserEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Cursor does not have child fields")
 		},
 	}
 	return fc, nil
@@ -5538,11 +7454,14 @@ func (ec *executionContext) _UsersResult_users(ctx context.Context, field graphq
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.([]*ent.User)
+	res := resTmp.(*ent.UserConnection)
 	fc.Result = res
-	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUserConnection2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐUserConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UsersResult_users(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5553,28 +7472,14 @@ func (ec *executionContext) fieldContext_UsersResult_users(ctx context.Context, 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "username":
-				return ec.fieldContext_User_username(ctx, field)
-			case "password":
-				return ec.fieldContext_User_password(ctx, field)
-			case "location":
-				return ec.fieldContext_User_location(ctx, field)
-			case "uploadImg":
-				return ec.fieldContext_User_uploadImg(ctx, field)
-			case "isAdmin":
-				return ec.fieldContext_User_isAdmin(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_User_createdAt(ctx, field)
-			case "posts":
-				return ec.fieldContext_User_posts(ctx, field)
-			case "likes":
-				return ec.fieldContext_User_likes(ctx, field)
-			case "comments":
-				return ec.fieldContext_User_comments(ctx, field)
+			case "edges":
+				return ec.fieldContext_UserConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_UserConnection_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_UserConnection_totalCount(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type UserConnection", field.Name)
 		},
 	}
 	return fc, nil
@@ -7353,6 +9258,46 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputCommentOrder(ctx context.Context, obj interface{}) (ent.CommentOrder, error) {
+	var it ent.CommentOrder
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	if _, present := asMap["direction"]; !present {
+		asMap["direction"] = "ASC"
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			it.Direction, err = ec.unmarshalNOrderDirection2githubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "field":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			it.Field, err = ec.unmarshalNCommentOrderField2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCommentOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateCommentInput(ctx context.Context, obj interface{}) (ent.CreateCommentInput, error) {
 	var it ent.CreateCommentInput
 	asMap := map[string]interface{}{}
@@ -7572,6 +9517,46 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("commentIDs"))
 			it.CommentIDs, err = ec.unmarshalOID2ᚕintᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputPostOrder(ctx context.Context, obj interface{}) (ent.PostOrder, error) {
+	var it ent.PostOrder
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	if _, present := asMap["direction"]; !present {
+		asMap["direction"] = "ASC"
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			it.Direction, err = ec.unmarshalNOrderDirection2githubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "field":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			it.Field, err = ec.unmarshalNPostOrderField2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPostOrderField(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -7905,6 +9890,46 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUserOrder(ctx context.Context, obj interface{}) (ent.UserOrder, error) {
+	var it ent.UserOrder
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	if _, present := asMap["direction"]; !present {
+		asMap["direction"] = "ASC"
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			it.Direction, err = ec.unmarshalNOrderDirection2githubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "field":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			it.Field, err = ec.unmarshalNUserOrderField2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐUserOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -7989,6 +10014,13 @@ func (ec *executionContext) _Result(ctx context.Context, sel ast.SelectionSet, o
 			return graphql.Null
 		}
 		return ec._PostsResult(ctx, sel, obj)
+	case model.CommentsResult:
+		return ec._CommentsResult(ctx, sel, &obj)
+	case *model.CommentsResult:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._CommentsResult(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -8056,6 +10088,9 @@ func (ec *executionContext) _Comment(ctx context.Context, sel ast.SelectionSet, 
 					}
 				}()
 				res = ec._Comment_post(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			}
 
@@ -8100,6 +10135,116 @@ func (ec *executionContext) _Comment(ctx context.Context, sel ast.SelectionSet, 
 				return innerFunc(ctx)
 
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var commentConnectionImplementors = []string{"CommentConnection"}
+
+func (ec *executionContext) _CommentConnection(ctx context.Context, sel ast.SelectionSet, obj *ent.CommentConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, commentConnectionImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CommentConnection")
+		case "edges":
+
+			out.Values[i] = ec._CommentConnection_edges(ctx, field, obj)
+
+		case "pageInfo":
+
+			out.Values[i] = ec._CommentConnection_pageInfo(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "totalCount":
+
+			out.Values[i] = ec._CommentConnection_totalCount(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var commentEdgeImplementors = []string{"CommentEdge"}
+
+func (ec *executionContext) _CommentEdge(ctx context.Context, sel ast.SelectionSet, obj *ent.CommentEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, commentEdgeImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CommentEdge")
+		case "node":
+
+			out.Values[i] = ec._CommentEdge_node(ctx, field, obj)
+
+		case "cursor":
+
+			out.Values[i] = ec._CommentEdge_cursor(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var commentsResultImplementors = []string{"CommentsResult", "Result"}
+
+func (ec *executionContext) _CommentsResult(ctx context.Context, sel ast.SelectionSet, obj *model.CommentsResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, commentsResultImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CommentsResult")
+		case "ok":
+
+			out.Values[i] = ec._CommentsResult_ok(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "error":
+
+			out.Values[i] = ec._CommentsResult_error(ctx, field, obj)
+
+		case "comments":
+
+			out.Values[i] = ec._CommentsResult_comments(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -8578,6 +10723,9 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._Post_comments(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			}
 
@@ -8622,6 +10770,77 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 				return innerFunc(ctx)
 
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var postConnectionImplementors = []string{"PostConnection"}
+
+func (ec *executionContext) _PostConnection(ctx context.Context, sel ast.SelectionSet, obj *ent.PostConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, postConnectionImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PostConnection")
+		case "edges":
+
+			out.Values[i] = ec._PostConnection_edges(ctx, field, obj)
+
+		case "pageInfo":
+
+			out.Values[i] = ec._PostConnection_pageInfo(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "totalCount":
+
+			out.Values[i] = ec._PostConnection_totalCount(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var postEdgeImplementors = []string{"PostEdge"}
+
+func (ec *executionContext) _PostEdge(ctx context.Context, sel ast.SelectionSet, obj *ent.PostEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, postEdgeImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PostEdge")
+		case "node":
+
+			out.Values[i] = ec._PostEdge_node(ctx, field, obj)
+
+		case "cursor":
+
+			out.Values[i] = ec._PostEdge_cursor(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -8694,6 +10913,9 @@ func (ec *executionContext) _PostsResult(ctx context.Context, sel ast.SelectionS
 
 			out.Values[i] = ec._PostsResult_posts(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -8823,6 +11045,29 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_users(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "seePostComment":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_seePostComment(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -9014,6 +11259,9 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._User_posts(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			}
 
@@ -9048,6 +11296,9 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._User_comments(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			}
 
@@ -9055,6 +11306,77 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 				return innerFunc(ctx)
 
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var userConnectionImplementors = []string{"UserConnection"}
+
+func (ec *executionContext) _UserConnection(ctx context.Context, sel ast.SelectionSet, obj *ent.UserConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, userConnectionImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UserConnection")
+		case "edges":
+
+			out.Values[i] = ec._UserConnection_edges(ctx, field, obj)
+
+		case "pageInfo":
+
+			out.Values[i] = ec._UserConnection_pageInfo(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "totalCount":
+
+			out.Values[i] = ec._UserConnection_totalCount(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var userEdgeImplementors = []string{"UserEdge"}
+
+func (ec *executionContext) _UserEdge(ctx context.Context, sel ast.SelectionSet, obj *ent.UserEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, userEdgeImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UserEdge")
+		case "node":
+
+			out.Values[i] = ec._UserEdge_node(ctx, field, obj)
+
+		case "cursor":
+
+			out.Values[i] = ec._UserEdge_cursor(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -9127,6 +11449,9 @@ func (ec *executionContext) _UsersResult(ctx context.Context, sel ast.SelectionS
 
 			out.Values[i] = ec._UsersResult_users(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -9471,50 +11796,6 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) marshalNComment2ᚕᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCommentᚄ(ctx context.Context, sel ast.SelectionSet, v []*ent.Comment) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNComment2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐComment(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
 func (ec *executionContext) marshalNComment2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐComment(ctx context.Context, sel ast.SelectionSet, v *ent.Comment) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -9523,6 +11804,36 @@ func (ec *executionContext) marshalNComment2ᚖgithubᚗcomᚋMangoSteen0903ᚋg
 		return graphql.Null
 	}
 	return ec._Comment(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNCommentConnection2githubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCommentConnection(ctx context.Context, sel ast.SelectionSet, v ent.CommentConnection) graphql.Marshaler {
+	return ec._CommentConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCommentConnection2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCommentConnection(ctx context.Context, sel ast.SelectionSet, v *ent.CommentConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CommentConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNCommentOrderField2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCommentOrderField(ctx context.Context, v interface{}) (*ent.CommentOrderField, error) {
+	var res = new(ent.CommentOrderField)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCommentOrderField2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCommentOrderField(ctx context.Context, sel ast.SelectionSet, v *ent.CommentOrderField) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) unmarshalNCreateCommentInput2githubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCreateCommentInput(ctx context.Context, v interface{}) (ent.CreateCommentInput, error) {
@@ -9538,6 +11849,16 @@ func (ec *executionContext) unmarshalNCreatePostInput2githubᚗcomᚋMangoSteen0
 func (ec *executionContext) unmarshalNCreateUserInput2githubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCreateUserInput(ctx context.Context, v interface{}) (ent.CreateUserInput, error) {
 	res, err := ec.unmarshalInputCreateUserInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNCursor2githubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCursor(ctx context.Context, v interface{}) (ent.Cursor, error) {
+	var res ent.Cursor
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCursor2githubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCursor(ctx context.Context, sel ast.SelectionSet, v ent.Cursor) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) marshalNDefaultResult2githubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋgraphᚋmodelᚐDefaultResult(ctx context.Context, sel ast.SelectionSet, v model.DefaultResult) graphql.Marshaler {
@@ -9688,48 +12009,18 @@ func (ec *executionContext) marshalNNode2ᚕgithubᚗcomᚋMangoSteen0903ᚋgo�
 	return ret
 }
 
-func (ec *executionContext) marshalNPost2ᚕᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPostᚄ(ctx context.Context, sel ast.SelectionSet, v []*ent.Post) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNPost2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPost(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
+func (ec *executionContext) unmarshalNOrderDirection2githubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐOrderDirection(ctx context.Context, v interface{}) (ent.OrderDirection, error) {
+	var res ent.OrderDirection
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
 
-	}
-	wg.Wait()
+func (ec *executionContext) marshalNOrderDirection2githubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐOrderDirection(ctx context.Context, sel ast.SelectionSet, v ent.OrderDirection) graphql.Marshaler {
+	return v
+}
 
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
+func (ec *executionContext) marshalNPageInfo2githubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v ent.PageInfo) graphql.Marshaler {
+	return ec._PageInfo(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNPost2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPost(ctx context.Context, sel ast.SelectionSet, v *ent.Post) graphql.Marshaler {
@@ -9740,6 +12031,36 @@ func (ec *executionContext) marshalNPost2ᚖgithubᚗcomᚋMangoSteen0903ᚋgo�
 		return graphql.Null
 	}
 	return ec._Post(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNPostConnection2githubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPostConnection(ctx context.Context, sel ast.SelectionSet, v ent.PostConnection) graphql.Marshaler {
+	return ec._PostConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPostConnection2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPostConnection(ctx context.Context, sel ast.SelectionSet, v *ent.PostConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PostConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNPostOrderField2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPostOrderField(ctx context.Context, v interface{}) (*ent.PostOrderField, error) {
+	var res = new(ent.PostOrderField)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNPostOrderField2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPostOrderField(ctx context.Context, sel ast.SelectionSet, v *ent.PostOrderField) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) marshalNPostResult2githubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋgraphᚋmodelᚐPostResult(ctx context.Context, sel ast.SelectionSet, v model.PostResult) graphql.Marshaler {
@@ -9754,20 +12075,6 @@ func (ec *executionContext) marshalNPostResult2ᚖgithubᚗcomᚋMangoSteen0903�
 		return graphql.Null
 	}
 	return ec._PostResult(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNPostsResult2githubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋgraphᚋmodelᚐPostsResult(ctx context.Context, sel ast.SelectionSet, v model.PostsResult) graphql.Marshaler {
-	return ec._PostsResult(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNPostsResult2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋgraphᚋmodelᚐPostsResult(ctx context.Context, sel ast.SelectionSet, v *model.PostsResult) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._PostsResult(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNResult2githubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋgraphᚋmodelᚐResult(ctx context.Context, sel ast.SelectionSet, v model.Result) graphql.Marshaler {
@@ -9825,50 +12132,6 @@ func (ec *executionContext) unmarshalNUpdateUserInput2githubᚗcomᚋMangoSteen0
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*ent.User) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐUser(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
 func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐUser(ctx context.Context, sel ast.SelectionSet, v *ent.User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -9877,6 +12140,36 @@ func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋMangoSteen0903ᚋgo�
 		return graphql.Null
 	}
 	return ec._User(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNUserConnection2githubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐUserConnection(ctx context.Context, sel ast.SelectionSet, v ent.UserConnection) graphql.Marshaler {
+	return ec._UserConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUserConnection2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐUserConnection(ctx context.Context, sel ast.SelectionSet, v *ent.UserConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UserConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNUserOrderField2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐUserOrderField(ctx context.Context, v interface{}) (*ent.UserOrderField, error) {
+	var res = new(ent.UserOrderField)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUserOrderField2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐUserOrderField(ctx context.Context, sel ast.SelectionSet, v *ent.UserOrderField) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) marshalNUserResult2githubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋgraphᚋmodelᚐUserResult(ctx context.Context, sel ast.SelectionSet, v model.UserResult) graphql.Marshaler {
@@ -10233,6 +12526,69 @@ func (ec *executionContext) marshalOComment2ᚕᚖgithubᚗcomᚋMangoSteen0903�
 	return ret
 }
 
+func (ec *executionContext) marshalOComment2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐComment(ctx context.Context, sel ast.SelectionSet, v *ent.Comment) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Comment(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOCommentEdge2ᚕᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCommentEdge(ctx context.Context, sel ast.SelectionSet, v []*ent.CommentEdge) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOCommentEdge2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCommentEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalOCommentEdge2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCommentEdge(ctx context.Context, sel ast.SelectionSet, v *ent.CommentEdge) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._CommentEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOCommentOrder2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCommentOrder(ctx context.Context, v interface{}) (*ent.CommentOrder, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputCommentOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalOCursor2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐCursor(ctx context.Context, v interface{}) (*ent.Cursor, error) {
 	if v == nil {
 		return nil, nil
@@ -10350,6 +12706,22 @@ func (ec *executionContext) marshalOID2ᚖint(ctx context.Context, sel ast.Selec
 	return res
 }
 
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt(*v)
+	return res
+}
+
 func (ec *executionContext) marshalOLike2ᚕᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐLikeᚄ(ctx context.Context, sel ast.SelectionSet, v []*ent.Like) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -10404,47 +12776,6 @@ func (ec *executionContext) marshalONode2githubᚗcomᚋMangoSteen0903ᚋgoᚑbl
 	return ec._Node(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOPost2ᚕᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPost(ctx context.Context, sel ast.SelectionSet, v []*ent.Post) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOPost2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPost(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
 func (ec *executionContext) marshalOPost2ᚕᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPostᚄ(ctx context.Context, sel ast.SelectionSet, v []*ent.Post) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -10497,6 +12828,62 @@ func (ec *executionContext) marshalOPost2ᚖgithubᚗcomᚋMangoSteen0903ᚋgo�
 		return graphql.Null
 	}
 	return ec._Post(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOPostEdge2ᚕᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPostEdge(ctx context.Context, sel ast.SelectionSet, v []*ent.PostEdge) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOPostEdge2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPostEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalOPostEdge2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPostEdge(ctx context.Context, sel ast.SelectionSet, v *ent.PostEdge) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._PostEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOPostOrder2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐPostOrder(ctx context.Context, v interface{}) (*ent.PostOrder, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputPostOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {
@@ -10595,47 +12982,6 @@ func (ec *executionContext) marshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgen�
 	return res
 }
 
-func (ec *executionContext) marshalOUser2ᚕᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐUser(ctx context.Context, sel ast.SelectionSet, v []*ent.User) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐUser(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
 func (ec *executionContext) marshalOUser2ᚕᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*ent.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -10688,6 +13034,62 @@ func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋMangoSteen0903ᚋgo�
 		return graphql.Null
 	}
 	return ec._User(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUserEdge2ᚕᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐUserEdge(ctx context.Context, sel ast.SelectionSet, v []*ent.UserEdge) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOUserEdge2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐUserEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalOUserEdge2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐUserEdge(ctx context.Context, sel ast.SelectionSet, v *ent.UserEdge) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._UserEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOUserOrder2ᚖgithubᚗcomᚋMangoSteen0903ᚋgoᚑblogᚑgraphqlᚋentᚐUserOrder(ctx context.Context, v interface{}) (*ent.UserOrder, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputUserOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

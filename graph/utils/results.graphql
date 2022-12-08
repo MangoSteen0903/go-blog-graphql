@@ -23,7 +23,7 @@ type UserResult implements Result {
 type UsersResult implements Result {
   ok: Boolean!
   error: String
-  users: [User]
+  users: UserConnection!
 }
 
 type PostResult implements Result {
@@ -35,5 +35,11 @@ type PostResult implements Result {
 type PostsResult implements Result {
   ok: Boolean!
   error: String
-  posts: [Post]
+  posts: PostConnection!
+}
+
+type CommentsResult implements Result {
+  ok: Boolean!
+  error: String
+  comments: CommentConnection!
 }

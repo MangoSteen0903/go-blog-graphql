@@ -5,6 +5,7 @@ package resolvers
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/MangoSteen0903/go-blog-graphql/ent"
 	"github.com/MangoSteen0903/go-blog-graphql/ent/comment"
@@ -166,6 +167,20 @@ func (r *mutationResolver) ToggleCommentLike(ctx context.Context, id int) (*mode
 	return &model.DefaultResult{
 		Ok: true,
 	}, nil
+}
+
+// SeePostComment is the resolver for the seePostComment field.
+func (r *queryResolver) SeePostComment(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.CommentOrder, postID int) (*ent.CommentConnection, error) {
+	comments, err := r.client.Post.Query().Where(post.ID(postID)).QueryComments().Paginate(ctx, after, first, before, last,
+		ent.WithCommentOrder(orderBy),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println(comments)
+
+	return comments, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

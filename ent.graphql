@@ -5,8 +5,50 @@ type Comment implements Node {
   context: String!
   createdAt: Time!
   owner: [User!]
-  post: [Post!]
+  post(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: Cursor
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the elements in the list that come before the specified cursor."""
+    before: Cursor
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Ordering options for Posts returned from the connection."""
+    orderBy: PostOrder
+  ): PostConnection!
   likes: [Like!]
+}
+"""A connection to a list of items."""
+type CommentConnection {
+  """A list of edges."""
+  edges: [CommentEdge]
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+  """Identifies the total count of items in the connection."""
+  totalCount: Int!
+}
+"""An edge in a connection."""
+type CommentEdge {
+  """The item at the end of the edge."""
+  node: Comment
+  """A cursor for use in pagination."""
+  cursor: Cursor!
+}
+"""Ordering options for Comment connections"""
+input CommentOrder {
+  """The ordering direction."""
+  direction: OrderDirection! = ASC
+  """The field by which to order Comments."""
+  field: CommentOrderField!
+}
+"""Properties by which Comment connections can be ordered."""
+enum CommentOrderField {
+  CREATED_AT
 }
 """
 CreateCommentInput is used for create Comment object.
@@ -101,8 +143,50 @@ type Post implements Node {
   createdAt: Time!
   hashtags: [Hashtag!]
   likes: [Like!]
-  comments: [Comment!]
+  comments(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: Cursor
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the elements in the list that come before the specified cursor."""
+    before: Cursor
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Ordering options for Comments returned from the connection."""
+    orderBy: CommentOrder
+  ): CommentConnection!
   owner: User
+}
+"""A connection to a list of items."""
+type PostConnection {
+  """A list of edges."""
+  edges: [PostEdge]
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+  """Identifies the total count of items in the connection."""
+  totalCount: Int!
+}
+"""An edge in a connection."""
+type PostEdge {
+  """The item at the end of the edge."""
+  node: Post
+  """A cursor for use in pagination."""
+  cursor: Cursor!
+}
+"""Ordering options for Post connections"""
+input PostOrder {
+  """The ordering direction."""
+  direction: OrderDirection! = ASC
+  """The field by which to order Posts."""
+  field: PostOrderField!
+}
+"""Properties by which Post connections can be ordered."""
+enum PostOrderField {
+  CREATED_AT
 }
 type Query {
   """Fetches an object given its ID."""
@@ -115,9 +199,54 @@ type Query {
     """The list of node IDs."""
     ids: [ID!]!
   ): [Node]!
-  comments: [Comment!]!
-  posts: [Post!]!
-  users: [User!]!
+  comments(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: Cursor
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the elements in the list that come before the specified cursor."""
+    before: Cursor
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Ordering options for Comments returned from the connection."""
+    orderBy: CommentOrder
+  ): CommentConnection!
+  posts(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: Cursor
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the elements in the list that come before the specified cursor."""
+    before: Cursor
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Ordering options for Posts returned from the connection."""
+    orderBy: PostOrder
+  ): PostConnection!
+  users(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: Cursor
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the elements in the list that come before the specified cursor."""
+    before: Cursor
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Ordering options for Users returned from the connection."""
+    orderBy: UserOrder
+  ): UserConnection!
 }
 """The builtin Time type"""
 scalar Time
@@ -180,7 +309,64 @@ type User implements Node {
   uploadImg: String
   isAdmin: Boolean!
   createdAt: Time!
-  posts: [Post!]
+  posts(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: Cursor
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the elements in the list that come before the specified cursor."""
+    before: Cursor
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Ordering options for Posts returned from the connection."""
+    orderBy: PostOrder
+  ): PostConnection!
   likes: [Like!]
-  comments: [Comment!]
+  comments(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: Cursor
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the elements in the list that come before the specified cursor."""
+    before: Cursor
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+
+    """Ordering options for Comments returned from the connection."""
+    orderBy: CommentOrder
+  ): CommentConnection!
+}
+"""A connection to a list of items."""
+type UserConnection {
+  """A list of edges."""
+  edges: [UserEdge]
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+  """Identifies the total count of items in the connection."""
+  totalCount: Int!
+}
+"""An edge in a connection."""
+type UserEdge {
+  """The item at the end of the edge."""
+  node: User
+  """A cursor for use in pagination."""
+  cursor: Cursor!
+}
+"""Ordering options for User connections"""
+input UserOrder {
+  """The ordering direction."""
+  direction: OrderDirection! = ASC
+  """The field by which to order Users."""
+  field: UserOrderField!
+}
+"""Properties by which User connections can be ordered."""
+enum UserOrderField {
+  CREATED_AT
 }

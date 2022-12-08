@@ -5,7 +5,6 @@ package resolvers
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/MangoSteen0903/go-blog-graphql/ent"
 	"github.com/MangoSteen0903/go-blog-graphql/graph/generated"
@@ -13,27 +12,30 @@ import (
 
 // Node is the resolver for the node field.
 func (r *queryResolver) Node(ctx context.Context, id int) (ent.Noder, error) {
-	panic(fmt.Errorf("not implemented: Node - node"))
+	return r.client.Noder(ctx, id)
 }
 
 // Nodes is the resolver for the nodes field.
 func (r *queryResolver) Nodes(ctx context.Context, ids []int) ([]ent.Noder, error) {
-	panic(fmt.Errorf("not implemented: Nodes - nodes"))
+	return r.client.Noders(ctx, ids)
 }
 
 // Comments is the resolver for the comments field.
-func (r *queryResolver) Comments(ctx context.Context) ([]*ent.Comment, error) {
-	panic(fmt.Errorf("not implemented: Comments - comments"))
+func (r *queryResolver) Comments(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.CommentOrder) (*ent.CommentConnection, error) {
+	return r.client.Comment.Query().
+		Paginate(ctx, after, first, before, last, ent.WithCommentOrder(orderBy))
 }
 
 // Posts is the resolver for the posts field.
-func (r *queryResolver) Posts(ctx context.Context) ([]*ent.Post, error) {
-	panic(fmt.Errorf("not implemented: Posts - posts"))
+func (r *queryResolver) Posts(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.PostOrder) (*ent.PostConnection, error) {
+	return r.client.Post.Query().
+		Paginate(ctx, after, first, before, last, ent.WithPostOrder(orderBy))
 }
 
 // Users is the resolver for the users field.
-func (r *queryResolver) Users(ctx context.Context) ([]*ent.User, error) {
-	panic(fmt.Errorf("not implemented: Users - users"))
+func (r *queryResolver) Users(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.UserOrder) (*ent.UserConnection, error) {
+	return r.client.User.Query().
+		Paginate(ctx, after, first, before, last, ent.WithUserOrder(orderBy))
 }
 
 // Comment returns generated.CommentResolver implementation.

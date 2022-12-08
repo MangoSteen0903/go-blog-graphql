@@ -116,8 +116,12 @@ func (r *queryResolver) SeeUser(ctx context.Context, id int) (*model.UserResult,
 }
 
 // SeeUsers is the resolver for the seeUsers field.
-func (r *queryResolver) SeeUsers(ctx context.Context) (*model.UsersResult, error) {
-	users, err := r.client.User.Query().All(ctx)
+func (r *queryResolver) SeeUsers(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.UserOrder) (*model.UsersResult, error) {
+	users, err := r.client.User.Query().Paginate(ctx, after, first, before, last,
+		ent.WithUserOrder(
+			orderBy,
+		),
+	)
 	if err != nil {
 		result := utils.HandleErr("Cannot retrive User. Please Try again.")
 		newResult := &model.UsersResult{Ok: result.Ok, Error: result.Error}

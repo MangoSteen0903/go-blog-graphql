@@ -20,7 +20,10 @@ func (Post) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("Title"),
 		field.Text("Context"),
-		field.Time("created_at").Default(time.Now),
+		field.Time("created_at").Default(time.Now).
+			Annotations(
+				entgql.OrderField("CREATED_AT"),
+			),
 	}
 }
 
@@ -29,13 +32,16 @@ func (Post) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("hashtags", Hashtag.Type),
 		edge.To("Likes", Like.Type),
-		edge.To("Comments", Comment.Type),
+		edge.To("Comments", Comment.Type).Annotations(
+			entgql.RelayConnection(),
+		),
 		edge.From("owner", User.Type).Ref("Posts").Unique(),
 	}
 }
 
 func (Post) Annotations() []schema.Annotation {
 	return []schema.Annotation{
+		entgql.RelayConnection(),
 		entgql.QueryField(),
 		entgql.Mutations(entgql.MutationCreate(), entgql.MutationUpdate()),
 	}

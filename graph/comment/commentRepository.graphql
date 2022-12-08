@@ -8,3 +8,14 @@ extend type Mutation {
 extend type Comment {
   likeNum: Int!
 }
+
+extend type Query {
+  seePostComment(
+    after: Cursor
+    first: Int
+    before: Cursor
+    last: Int
+    orderBy: CommentOrder
+    postId: Int!
+  ): CommentConnection!
+}

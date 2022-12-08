@@ -19,7 +19,10 @@ type Comment struct {
 func (Comment) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("Context"),
-		field.Time("created_at").Default(time.Now()),
+		field.Time("created_at").Default(time.Now()).
+			Annotations(
+				entgql.OrderField("CREATED_AT"),
+			),
 	}
 }
 
@@ -27,13 +30,16 @@ func (Comment) Fields() []ent.Field {
 func (Comment) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("owner", User.Type).Ref("Comments"),
-		edge.From("post", Post.Type).Ref("Comments"),
+		edge.From("post", Post.Type).Ref("Comments").Annotations(
+			entgql.RelayConnection(),
+		),
 		edge.To("Likes", Like.Type),
 	}
 }
 
 func (Comment) Annotations() []schema.Annotation {
 	return []schema.Annotation{
+		entgql.RelayConnection(),
 		entgql.QueryField(),
 		entgql.Mutations(entgql.MutationCreate(), entgql.MutationUpdate()),
 	}

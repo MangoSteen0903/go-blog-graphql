@@ -20,16 +20,24 @@ func (c *Comment) Owner(ctx context.Context) (result []*User, err error) {
 	return result, err
 }
 
-func (c *Comment) Post(ctx context.Context) (result []*Post, err error) {
-	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
-		result, err = c.NamedPost(graphql.GetFieldContext(ctx).Field.Alias)
-	} else {
-		result, err = c.Edges.PostOrErr()
+func (c *Comment) Post(
+	ctx context.Context, after *Cursor, first *int, before *Cursor, last *int, orderBy *PostOrder,
+) (*PostConnection, error) {
+	opts := []PostPaginateOption{
+		WithPostOrder(orderBy),
 	}
-	if IsNotLoaded(err) {
-		result, err = c.QueryPost().All(ctx)
+	alias := graphql.GetFieldContext(ctx).Field.Alias
+	totalCount, hasTotalCount := c.Edges.totalCount[1][alias]
+	if nodes, err := c.NamedPost(alias); err == nil || hasTotalCount {
+		pager, err := newPostPager(opts)
+		if err != nil {
+			return nil, err
+		}
+		conn := &PostConnection{Edges: []*PostEdge{}, TotalCount: totalCount}
+		conn.build(nodes, pager, after, first, before, last)
+		return conn, nil
 	}
-	return result, err
+	return c.QueryPost().Paginate(ctx, after, first, before, last, opts...)
 }
 
 func (c *Comment) Likes(ctx context.Context) (result []*Like, err error) {
@@ -116,16 +124,24 @@ func (po *Post) Likes(ctx context.Context) (result []*Like, err error) {
 	return result, err
 }
 
-func (po *Post) Comments(ctx context.Context) (result []*Comment, err error) {
-	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
-		result, err = po.NamedComments(graphql.GetFieldContext(ctx).Field.Alias)
-	} else {
-		result, err = po.Edges.CommentsOrErr()
+func (po *Post) Comments(
+	ctx context.Context, after *Cursor, first *int, before *Cursor, last *int, orderBy *CommentOrder,
+) (*CommentConnection, error) {
+	opts := []CommentPaginateOption{
+		WithCommentOrder(orderBy),
 	}
-	if IsNotLoaded(err) {
-		result, err = po.QueryComments().All(ctx)
+	alias := graphql.GetFieldContext(ctx).Field.Alias
+	totalCount, hasTotalCount := po.Edges.totalCount[2][alias]
+	if nodes, err := po.NamedComments(alias); err == nil || hasTotalCount {
+		pager, err := newCommentPager(opts)
+		if err != nil {
+			return nil, err
+		}
+		conn := &CommentConnection{Edges: []*CommentEdge{}, TotalCount: totalCount}
+		conn.build(nodes, pager, after, first, before, last)
+		return conn, nil
 	}
-	return result, err
+	return po.QueryComments().Paginate(ctx, after, first, before, last, opts...)
 }
 
 func (po *Post) Owner(ctx context.Context) (*User, error) {
@@ -136,16 +152,24 @@ func (po *Post) Owner(ctx context.Context) (*User, error) {
 	return result, MaskNotFound(err)
 }
 
-func (u *User) Posts(ctx context.Context) (result []*Post, err error) {
-	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
-		result, err = u.NamedPosts(graphql.GetFieldContext(ctx).Field.Alias)
-	} else {
-		result, err = u.Edges.PostsOrErr()
+func (u *User) Posts(
+	ctx context.Context, after *Cursor, first *int, before *Cursor, last *int, orderBy *PostOrder,
+) (*PostConnection, error) {
+	opts := []PostPaginateOption{
+		WithPostOrder(orderBy),
 	}
-	if IsNotLoaded(err) {
-		result, err = u.QueryPosts().All(ctx)
+	alias := graphql.GetFieldContext(ctx).Field.Alias
+	totalCount, hasTotalCount := u.Edges.totalCount[0][alias]
+	if nodes, err := u.NamedPosts(alias); err == nil || hasTotalCount {
+		pager, err := newPostPager(opts)
+		if err != nil {
+			return nil, err
+		}
+		conn := &PostConnection{Edges: []*PostEdge{}, TotalCount: totalCount}
+		conn.build(nodes, pager, after, first, before, last)
+		return conn, nil
 	}
-	return result, err
+	return u.QueryPosts().Paginate(ctx, after, first, before, last, opts...)
 }
 
 func (u *User) Likes(ctx context.Context) (result []*Like, err error) {
@@ -160,14 +184,22 @@ func (u *User) Likes(ctx context.Context) (result []*Like, err error) {
 	return result, err
 }
 
-func (u *User) Comments(ctx context.Context) (result []*Comment, err error) {
-	if fc := graphql.GetFieldContext(ctx); fc != nil && fc.Field.Alias != "" {
-		result, err = u.NamedComments(graphql.GetFieldContext(ctx).Field.Alias)
-	} else {
-		result, err = u.Edges.CommentsOrErr()
+func (u *User) Comments(
+	ctx context.Context, after *Cursor, first *int, before *Cursor, last *int, orderBy *CommentOrder,
+) (*CommentConnection, error) {
+	opts := []CommentPaginateOption{
+		WithCommentOrder(orderBy),
 	}
-	if IsNotLoaded(err) {
-		result, err = u.QueryComments().All(ctx)
+	alias := graphql.GetFieldContext(ctx).Field.Alias
+	totalCount, hasTotalCount := u.Edges.totalCount[2][alias]
+	if nodes, err := u.NamedComments(alias); err == nil || hasTotalCount {
+		pager, err := newCommentPager(opts)
+		if err != nil {
+			return nil, err
+		}
+		conn := &CommentConnection{Edges: []*CommentEdge{}, TotalCount: totalCount}
+		conn.build(nodes, pager, after, first, before, last)
+		return conn, nil
 	}
-	return result, err
+	return u.QueryComments().Paginate(ctx, after, first, before, last, opts...)
 }

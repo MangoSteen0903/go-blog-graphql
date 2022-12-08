@@ -221,24 +221,19 @@ func (r *queryResolver) SeePost(ctx context.Context, id int) (*model.PostResult,
 }
 
 // SeeUserPost is the resolver for the seeUserPost field.
-func (r *queryResolver) SeeUserPost(ctx context.Context, userID int) (*model.PostsResult, error) {
-	var errMsg string
-	errResult := &model.PostsResult{Ok: false}
-
-	posts, err := r.client.Post.Query().Where(
-		post.HasOwnerWith(
-			user.ID(userID),
-		),
-	).All(ctx)
+func (r *queryResolver) SeeUserPost(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.PostOrder, userID int) (*ent.PostConnection, error) {
+	posts, err := r.client.Post.Query().
+		Where(
+			post.HasOwnerWith(
+				user.ID(userID),
+			),
+		).
+		Paginate(ctx, after, first, before, last,
+			ent.WithPostOrder(orderBy))
 
 	if err != nil {
-		errMsg = "Cannot find User's Post"
-		errResult.Error = &errMsg
-		return errResult, nil
+		return nil, err
 	}
 
-	return &model.PostsResult{
-		Ok:    true,
-		Posts: posts,
-	}, nil
+	return posts, nil
 }

@@ -12,6 +12,16 @@ type Result interface {
 	GetError() *string
 }
 
+type CommentsResult struct {
+	Ok       bool                   `json:"ok"`
+	Error    *string                `json:"error"`
+	Comments *ent.CommentConnection `json:"comments"`
+}
+
+func (CommentsResult) IsResult()              {}
+func (this CommentsResult) GetOk() bool       { return this.Ok }
+func (this CommentsResult) GetError() *string { return this.Error }
+
 type DefaultResult struct {
 	Ok    bool    `json:"ok"`
 	Error *string `json:"error"`
@@ -42,9 +52,9 @@ func (this PostResult) GetOk() bool       { return this.Ok }
 func (this PostResult) GetError() *string { return this.Error }
 
 type PostsResult struct {
-	Ok    bool        `json:"ok"`
-	Error *string     `json:"error"`
-	Posts []*ent.Post `json:"posts"`
+	Ok    bool                `json:"ok"`
+	Error *string             `json:"error"`
+	Posts *ent.PostConnection `json:"posts"`
 }
 
 func (PostsResult) IsResult()              {}
@@ -62,9 +72,9 @@ func (this UserResult) GetOk() bool       { return this.Ok }
 func (this UserResult) GetError() *string { return this.Error }
 
 type UsersResult struct {
-	Ok    bool        `json:"ok"`
-	Error *string     `json:"error"`
-	Users []*ent.User `json:"users"`
+	Ok    bool                `json:"ok"`
+	Error *string             `json:"error"`
+	Users *ent.UserConnection `json:"users"`
 }
 
 func (UsersResult) IsResult()              {}
